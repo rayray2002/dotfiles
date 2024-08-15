@@ -1,0 +1,68 @@
+Host *
+  ForwardAgent yes
+  ForwardX11 yes
+
+Host linux*
+  HostName %h.csie.ntu.edu.tw
+  User b09901171
+
+Host oasis*
+  HostName %h.csie.ntu.edu.tw
+  User b09901171
+
+Host meow*
+  HostName %h.csie.ntu.edu.tw
+  User b09901171
+
+Host ws*
+  HostName %h.csie.ntu.edu.tw
+  User b09901171
+
+Host cad*
+  HostName %h.ee.ntu.edu.tw
+  User b09171
+
+Host lab_dennis
+  HostName 140.112.194.91
+  User ray
+  Port 1008
+
+Host lab_kn
+  HostName 140.112.194.91
+  User ray
+  Port 1012
+
+Host lab_a6000
+  HostName 140.112.194.91
+  User ray
+  Port 1013
+
+Host lab_4090
+  HostName 140.112.194.91
+  User ray
+  Port 1015
+
+Host lab_yck
+  HostName 140.112.194.91
+  User ray
+  Port 1014
+
+Host *.gps
+  HostName %h.caltech.edu
+  User brh
+
+Host lightdance-*
+  HostName %h.local
+  User pi
+
+Host eofe*
+  HostName %h.mit.edu
+  User boruei
+
+Host satori1
+  HostName satori-login-001.mit.edu
+  User boruei
+
+Host satori2
+  HostName satori-login-002.mit.edu
+  User boruei
