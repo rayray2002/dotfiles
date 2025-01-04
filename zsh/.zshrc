@@ -101,16 +101,16 @@ setopt no_auto_menu  # require an extra TAB press to open the completion menu
 
 eval "$(zoxide init zsh)"
 
-alias l='exa'
-alias ls='exa --icons'
-alias la='exa --icons -a'
-alias ll='exa --icons -lg'
-alias lla='exa --icons -lga'
+alias l='eza'
+alias ls='eza --icons'
+alias la='eza --icons -a'
+alias ll='eza --icons -lg'
+alias lla='eza --icons -lga'
 
 alias cat='batcat'
 alias vim='nvim'
 
-alias tree='exa --icons -T -a -I .git'
+alias tree='eza --icons -T -a -I .git'
 
 # gpu
 alias usegpu='_usegpu() { export CUDA_VISIBLE_DEVICES="$1";}; _usegpu'
