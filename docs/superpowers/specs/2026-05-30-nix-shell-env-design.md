@@ -146,6 +146,14 @@ Homebrew keeps casks, fonts, and heavy/specialized packages.
 - **Neovim**: keep in Homebrew for now. Nix-managing neovim (`programs.neovim` / config)
   is deferred to future work.
 - **`zsh-abbr`**: include it (enabled), giving fish-style inline abbreviations in zsh.
+- **Extra tooling** (added to `modules/tools.nix`): Tier-1 essentials `delta`, `lazygit`,
+  `atuin` (synced fuzzy history — fits the cross-machine goal); modern coreutils `dust`,
+  `duf`, `procs`, `sd`, `yazi`; dev utils `hyperfine`, `tokei`, `jless`; agentic-coding
+  helpers `ast-grep`, `difftastic`, `watchexec`. `delta` is wired via a new `modules/git.nix`
+  (`programs.git` + identity).
+- **Python**: `micromamba` (the Nix-packaged "mamba", aliased `mamba`) manages environments /
+  conda-forge + system deps (CUDA); `uv` is the fast pip *inside* an active env. New
+  `modules/python.nix`. `pixi` noted as a future unified alternative but not adopted now.
 
 ## Open questions for implementation
 
