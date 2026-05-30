@@ -1,4 +1,4 @@
-# Nix-based Shell Environment — Design
+****# Nix-based Shell Environment — Design
 
 **Date:** 2026-05-30
 **Status:** Approved (design); pending implementation plan
@@ -48,7 +48,7 @@ dotfiles/
 │   ├── zsh.nix            # programs.zsh: aliases, plugins, history, options, initContent
 │   ├── starship.nix       # programs.starship.settings (TOML-as-Nix)
 │   ├── tmux.nix           # tmux config (symlink existing .tmux.conf.local or programs.tmux)
-│   └── tools.nix          # fzf, bat, eza, zoxide, ripgrep, fd, direnv, jq, tldr, neovim, gh
+│   └── tools.nix          # fzf, bat, eza, zoxide, ripgrep, fd, direnv, jq, tldr, gh
 ├── ssh/                   # existing config — symlinked via home.file
 └── (legacy install_*.sh removed; replaced by home-manager)
 ```
@@ -68,8 +68,8 @@ what differs.
 - `syntaxHighlighting.enable = true` — Nix-pinned `zsh-syntax-highlighting`
   (or `fast-syntax-highlighting` via `plugins`).
 - `enableCompletion = true` — compsys.
-- `plugins` — `fzf-tab` (fuzzy completion menu + preview); **optional** `zsh-abbr`
-  (fish-style abbreviations) behind a toggle.
+- `plugins` — `fzf-tab` (fuzzy completion menu + preview) and `zsh-abbr`
+  (fish-style inline abbreviations, enabled).
 - `shellAliases` — migrate existing aliases: `l/ls/la/ll/lla` (eza), `cat=bat`, `vim=nvim`,
   `tree`, `ta`/`tl` (tmux). GPU/`loop` helper functions → `initContent` (or `linux.nix`).
 - `history` — sane size + dedup options; `setopt glob_dots`, `no_auto_menu`.
@@ -85,8 +85,9 @@ what differs.
 ### `modules/tools.nix` — core CLI tools
 Prefer dedicated `programs.*` modules (they wire up config + shell integration):
 `programs.fzf`, `programs.bat`, `programs.eza`, `programs.zoxide`, `programs.direnv`
-(+ `nix-direnv`), `programs.git` (optional), `programs.neovim` (optional, or keep brew).
+(+ `nix-direnv`), `programs.git` (optional).
 Plain `home.packages` for the rest: `ripgrep`, `fd`, `jq`, `tldr`, `gh`, `wget`, `tree`, etc.
+**Neovim stays in Homebrew for now** (deferred).
 
 **Stays in Homebrew** (out of scope): GUI casks, all nerd fonts, and heavy/specialized
 tools (`qemu`, `lima`, `opencv`, `qt`, `pwntools`, `macfuse`, `xquartz`, CUDA-adjacent, …).
@@ -140,8 +141,12 @@ Homebrew keeps casks, fonts, and heavy/specialized packages.
 - Replacing neovim config internals (only its install method, optionally).
 - nushell/fish (decided against; `nu` may be added later as a secondary tool only).
 
+## Resolved decisions
+
+- **Neovim**: keep in Homebrew for now. Nix-managing neovim (`programs.neovim` / config)
+  is deferred to future work.
+- **`zsh-abbr`**: include it (enabled), giving fish-style inline abbreviations in zsh.
+
 ## Open questions for implementation
 
-- Neovim: manage via `programs.neovim` or keep in Homebrew? (lean: keep brew for now.)
-- `zsh-abbr`: include the optional abbreviations toggle on day one? (lean: yes, off by default.)
 - ssh: which files are safe to track in the repo vs keep machine-local.
