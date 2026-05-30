@@ -47,8 +47,10 @@ dotfiles/
 ├── modules/
 │   ├── zsh.nix            # programs.zsh: aliases, plugins, history, options, initContent
 │   ├── starship.nix       # programs.starship.settings (TOML-as-Nix)
+│   ├── git.nix            # programs.git + delta
+│   ├── python.nix         # uv + micromamba (+ micromamba zsh hook)
 │   ├── tmux.nix           # tmux config (symlink existing .tmux.conf.local or programs.tmux)
-│   └── tools.nix          # fzf, bat, eza, zoxide, ripgrep, fd, direnv, jq, tldr, gh
+│   └── tools.nix          # fzf, zoxide, direnv, atuin, lazygit, yazi, claude-code + CLI packages
 ├── ssh/                   # existing config — symlinked via home.file
 └── (legacy install_*.sh removed; replaced by home-manager)
 ```
@@ -154,6 +156,11 @@ Homebrew keeps casks, fonts, and heavy/specialized packages.
 - **Python**: `micromamba` (the Nix-packaged "mamba", aliased `mamba`) manages environments /
   conda-forge + system deps (CUDA); `uv` is the fast pip *inside* an active env. New
   `modules/python.nix`. `pixi` noted as a future unified alternative but not adopted now.
+- **AI / vibe-coding**: add `claude-code` via the auto-updating `sadjow/claude-code-nix` flake
+  input (reproducible *and* current, since plain nixpkgs lags agent releases by days/weeks);
+  installed through `modules/tools.nix`. Gemini CLI dropped (retired by Google 2026-05-19).
+  aichat/llm/mods declined for now. A dedicated `modules/ai.nix` can be split out later if more
+  agents are added.
 
 ## Open questions for implementation
 

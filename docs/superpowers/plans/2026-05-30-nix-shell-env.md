@@ -6,7 +6,7 @@
 
 **Architecture:** Standalone home-manager driven by a flake. `flake.nix` exposes two `homeConfigurations` (`ray@mac` → aarch64-darwin, `ray@linux` → x86_64-linux) that both import `home/common.nix`, which in turn imports focused modules under `modules/`. `home-manager switch` builds a generation in the Nix store and atomically swaps `$HOME` symlinks; rollback is one command. Homebrew is left in place for GUI casks, fonts, and heavy/specialized tools.
 
-**Tech Stack:** Nix (flakes), home-manager, zsh (native, no framework) with `zsh-autosuggestions` / `zsh-syntax-highlighting` / `zsh-fzf-tab` / `zsh-abbr`, starship, fzf, zoxide, direnv (+ nix-direnv), atuin, lazygit, yazi, delta, eza, bat, ripgrep, fd, modern coreutils (dust/duf/procs/sd), dev utils (hyperfine/tokei/jless), agentic-coding tools (ast-grep/difftastic/watchexec), and Python tooling (uv + micromamba).
+**Tech Stack:** Nix (flakes), home-manager, zsh (native, no framework) with `zsh-autosuggestions` / `zsh-syntax-highlighting` / `zsh-fzf-tab` / `zsh-abbr`, starship, fzf, zoxide, direnv (+ nix-direnv), atuin, lazygit, yazi, delta, eza, bat, ripgrep, fd, modern coreutils (dust/duf/procs/sd), dev utils (hyperfine/tokei/jless), agentic-coding tools (ast-grep/difftastic/watchexec), `claude-code` (via the auto-updating claude-code-nix flake), and Python tooling (uv + micromamba).
 
 ---
 
@@ -107,6 +107,10 @@ No commit (no repo changes in this task).
       url = "github:gpakosz/.tmux";
       flake = false;
     };
+    claude-code = {
+      url = "github:sadjow/claude-code-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = inputs@{ nixpkgs, home-manager, ... }:
@@ -188,9 +192,11 @@ Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
 auto-inject aliases that would collide with the explicit ones in `modules/zsh.nix`.
 `fzf`/`zoxide`/`direnv`/`atuin`/`yazi`/`lazygit` use their modules to get shell integration.
 Nix package names that differ from their command: `du-dust` → `dust`, `difftastic` → `difft`.
+`claude-code` comes from the auto-updating `claude-code-nix` flake input (not plain nixpkgs,
+which lags agent releases), so `modules/tools.nix` takes `inputs` as an argument.
 
 ```nix
-{ pkgs, ... }:
+{ inputs, pkgs, ... }:
 {
   programs.fzf = {
     enable = true;
@@ -247,6 +253,9 @@ Nix package names that differ from their command: `du-dust` → `dust`, `difftas
     ast-grep
     difftastic
     watchexec
+  ] ++ [
+    # AI agent CLI — auto-updating via the claude-code-nix flake input
+    inputs.claude-code.packages.${pkgs.system}.default
   ];
 }
 ```
@@ -278,7 +287,7 @@ Expected: completes with no error.
 
 ```bash
 git add modules/tools.nix home/common.nix
-git commit -m "feat(nix): CLI toolset (fzf, zoxide, direnv, atuin, lazygit, yazi, coreutils, dev/agentic tools)
+git commit -m "feat(nix): CLI toolset (fzf, zoxide, direnv, atuin, lazygit, yazi, coreutils, dev/agentic tools, claude-code)
 
 Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
 ```
@@ -707,7 +716,7 @@ Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
 
 - [ ] **Step 1: Record the current (pre-switch) tool paths for comparison**
 
-Run: `for c in eza bat fzf zoxide rg fd starship atuin lazygit delta uv micromamba; do printf "%s -> " "$c"; command -v "$c" || echo "(none)"; done`
+Run: `for c in eza bat fzf zoxide rg fd starship atuin lazygit delta uv micromamba claude; do printf "%s -> " "$c"; command -v "$c" || echo "(none)"; done`
 Expected: notes where each currently resolves (likely `/opt/homebrew/bin/...` or none).
 
 - [ ] **Step 2: Activate (bootstraps home-manager from the flake, backs up existing dotfiles)**
@@ -719,7 +728,7 @@ to `~/.zshrc.backup`.
 - [ ] **Step 3: Open a NEW terminal (or `exec zsh -l`) and verify the prompt + tools**
 
 Run (in the new shell):
-`for c in eza bat fzf zoxide rg fd starship atuin lazygit delta uv micromamba ast-grep; do printf "%s -> " "$c"; command -v "$c"; done`
+`for c in eza bat fzf zoxide rg fd starship atuin lazygit delta uv micromamba ast-grep claude; do printf "%s -> " "$c"; command -v "$c"; done`
 Expected: each now resolves under `~/.nix-profile/bin/...` (or `/nix/store/...`).
 
 - [ ] **Step 4: Verify interactive features manually**
@@ -855,7 +864,7 @@ uv pip install <packages>
 | `home/{darwin,linux}.nix` | per-platform home directory + extras |
 | `modules/zsh.nix` | zsh: aliases, plugins, history, helpers |
 | `modules/starship.nix` | prompt |
-| `modules/tools.nix` | fzf, zoxide, direnv, atuin, lazygit, yazi + CLI packages |
+| `modules/tools.nix` | fzf, zoxide, direnv, atuin, lazygit, yazi, claude-code + CLI packages |
 | `modules/git.nix` | git config + delta |
 | `modules/python.nix` | uv + micromamba |
 | `modules/tmux.nix` | tmux + oh-my-tmux + ssh config symlinks |
@@ -883,7 +892,7 @@ Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
 - `nix eval '.#homeConfigurations."ray@linux".activationPackage.drvPath'` succeeds.
 - A fresh terminal shows the starship prompt with working autosuggestions, syntax highlighting,
   fzf-tab, zsh-abbr, atuin (Ctrl-R), aliases, zoxide, direnv, and delta-rendered git diffs.
-- `eza bat fzf zoxide rg fd starship atuin lazygit delta uv micromamba ast-grep` resolve into the Nix profile.
+- `eza bat fzf zoxide rg fd starship atuin lazygit delta uv micromamba ast-grep claude` resolve into the Nix profile.
 - The Python smoke test (micromamba env + `uv pip install`) succeeds.
 - z4h no longer bootstraps and `~/.p10k.zsh` is no longer sourced.
 - Legacy install scripts and z4h/p10k files removed; `README.md` documents the workflow.
