@@ -1,0 +1,5 @@
+# Claude Code local state
+.claude/
+
+# scratch
+prompt.txt
