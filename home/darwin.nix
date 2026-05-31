@@ -1,9 +1,13 @@
-{ ... }:
+{ lib, ... }:
 {
   imports = [ ./common.nix ];
   home.homeDirectory = "/Users/ray";
 
-  # This mac predates the Nix setup and already has a populated miniforge3 root
-  # (base, wam, telegram, ...). Point micromamba at it so those envs keep working.
-  home.sessionVariables.MAMBA_ROOT_PREFIX = "$HOME/miniforge3";
+  home.sessionVariables = {
+    MAMBA_ROOT_PREFIX = "/Users/ray/miniforge3";
+  };
+
+  programs.zsh.initContent = lib.mkOrder 1100 ''
+    export MAMBA_ROOT_PREFIX="/Users/ray/miniforge3"
+  '';
 }
