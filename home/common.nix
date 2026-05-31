@@ -5,6 +5,7 @@
     ../modules/zsh.nix
     ../modules/starship.nix
     ../modules/git.nix
+    ../modules/python.nix
   ];
 
   home.username = "ray";
