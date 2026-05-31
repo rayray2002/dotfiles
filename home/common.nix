@@ -2,6 +2,7 @@
 {
   imports = [
     ../modules/tools.nix
+    ../modules/zsh.nix
   ];
 
   home.username = "ray";
