@@ -6,6 +6,7 @@
     ../modules/starship.nix
     ../modules/git.nix
     ../modules/python.nix
+    ../modules/tmux.nix
   ];
 
   home.username = "ray";
