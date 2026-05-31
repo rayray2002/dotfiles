@@ -5,7 +5,10 @@
     micromamba
   ];
 
-  home.sessionVariables.MAMBA_ROOT_PREFIX = "$HOME/micromamba";
+  # Point micromamba at the existing miniforge3 root so the pre-existing envs
+  # (base, wam, telegram, ...) remain discoverable and `mamba activate <name>`
+  # keeps working. New envs also land alongside them under ~/miniforge3/envs.
+  home.sessionVariables.MAMBA_ROOT_PREFIX = "$HOME/miniforge3";
 
   programs.zsh.initContent = lib.mkOrder 1200 ''
     # micromamba (provides `micromamba activate <env>`; aliased to `mamba`).
