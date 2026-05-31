@@ -25,7 +25,9 @@
       vim = "nvim";
       ta = "tmux a";
       tl = "tmux ls";
-      mamba = "micromamba";
+      # `mamba` is defined in modules/python.nix *after* the micromamba shell hook,
+      # because the hook output contains a literal `mamba()` block that collides
+      # with a pre-existing `mamba` alias at parse time.
     };
 
     plugins = [
@@ -43,7 +45,12 @@
 
     initContent = lib.mkMerge [
       (lib.mkOrder 550 ''
-        path=(~/bin $path)
+        # Re-prioritize the Nix profile ahead of anything ~/.zprofile prepended
+        # (e.g. `brew shellenv` puts /opt/homebrew/bin first). .zshrc runs after
+        # .zprofile, so this is the last word for interactive shells. typeset -U
+        # keeps the first occurrence and drops the later duplicate entries.
+        typeset -U path PATH
+        path=(~/bin ~/.nix-profile/bin /nix/var/nix/profiles/default/bin $path)
         fpath=(~/.zfunc $fpath)
       '')
       (lib.mkOrder 1000 ''
