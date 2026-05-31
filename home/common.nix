@@ -3,6 +3,7 @@
   imports = [
     ../modules/tools.nix
     ../modules/zsh.nix
+    ../modules/starship.nix
   ];
 
   home.username = "ray";
