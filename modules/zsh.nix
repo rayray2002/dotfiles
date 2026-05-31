@@ -25,6 +25,12 @@
       vim = "nvim";
       ta = "tmux a";
       tl = "tmux ls";
+      c = "claude";
+      gst = "git status";
+      gco = "git checkout";
+      gcmsg = "git commit -m";
+      gp = "git push";
+      gl = "git pull";
       # `mamba` is defined in modules/python.nix *after* the micromamba shell hook,
       # because the hook output contains a literal `mamba()` block that collides
       # with a pre-existing `mamba` alias at parse time.
@@ -40,6 +46,16 @@
         name = "zsh-abbr";
         src = pkgs.zsh-abbr;
         file = "share/zsh/zsh-abbr/zsh-abbr.plugin.zsh";
+      }
+      {
+        name = "zsh-transient-prompt";
+        src = pkgs.fetchFromGitHub {
+          owner = "olets";
+          repo = "zsh-transient-prompt";
+          rev = "v1.0.1";
+          sha256 = "sha256-v4RuB/LL5/6d0FPDPrheFN5o1ZXKjIbfThz/sKSEuII="; 
+        };
+        file = "transient-prompt.zsh-theme";
       }
     ];
 
@@ -66,6 +82,26 @@
 
         # local, machine-specific overrides
         [[ -f ~/.env.zsh ]] && source ~/.env.zsh
+      '')
+      (lib.mkOrder 2000 ''
+        # 1. Guarantee Starship is initialized first
+        eval "$(starship init zsh)"
+
+        # 2. Tell zsh-transient-prompt how to correctly render Starship's full, active prompt
+        TRANSIENT_PROMPT_PROMPT='$(starship prompt --terminal-width="$COLUMNS" --keymap="''${KEYMAP:-}" --status="$STARSHIP_CMD_STATUS" --pipestatus="''${STARSHIP_PIPE_STATUS[*]}" --cmd-duration="''${STARSHIP_DURATION:-}" --jobs="$STARSHIP_JOBS_COUNT")'
+        TRANSIENT_PROMPT_RPROMPT='$(starship prompt --right --terminal-width="$COLUMNS")'
+        
+        # 3. Define what the PAST (transient) prompts should collapse down to
+        TRANSIENT_PROMPT_TRANSIENT_PROMPT="%F{magenta}❯%f "
+        TRANSIENT_PROMPT_TRANSIENT_RPROMPT=""
+
+        # 4. Source the plugin
+        source ${pkgs.fetchFromGitHub {
+          owner = "olets";
+          repo = "zsh-transient-prompt";
+          rev = "v1.0.1";
+          sha256 = "sha256-v4RuB/LL5/6d0FPDPrheFN5o1ZXKjIbfThz/sKSEuII="; 
+        }}/transient-prompt.zsh-theme
       '')
     ];
   };
