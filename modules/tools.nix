@@ -28,6 +28,7 @@
   programs.yazi = {
     enable = true;
     enableZshIntegration = true;
+    shellWrapperName = "y";
   };
 
   programs.lazygit.enable = true;
@@ -43,7 +44,7 @@
     gh
     wget
     # modern coreutils
-    du-dust
+    dust
     duf
     procs
     sd
@@ -57,6 +58,6 @@
     watchexec
   ] ++ [
     # AI agent CLI — auto-updating via the claude-code-nix flake input
-    inputs.claude-code.packages.${pkgs.system}.default
+    inputs.claude-code.packages.${pkgs.stdenv.hostPlatform.system}.default
   ];
 }

@@ -21,7 +21,13 @@
     let
       mkHome = system: module:
         home-manager.lib.homeManagerConfiguration {
-          pkgs = nixpkgs.legacyPackages.${system};
+          pkgs = import nixpkgs {
+            inherit system;
+            # zsh-abbr ships under a non-commercial CC license that nixpkgs
+            # marks unfree; permit just that one package for personal use.
+            config.allowUnfreePredicate = pkg:
+              builtins.elem (nixpkgs.lib.getName pkg) [ "zsh-abbr" ];
+          };
           extraSpecialArgs = { inherit inputs; };
           modules = [ module ];
         };
