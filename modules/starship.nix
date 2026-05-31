@@ -1,26 +1,106 @@
-{ ... }:
+{ lib, ... }:
+
 {
   programs.starship = {
     enable = true;
     enableZshIntegration = true;
-    settings = {
-      add_newline = true;
-      command_timeout = 1000;
-      # Directory scan default (30ms) is too low for large/slow dirs and logs a
-      # "Scanning current directory timed out" warning; give it more headroom.
-      scan_timeout = 50;
 
-      character = {
-        success_symbol = "[❯](bold green)";
-        error_symbol = "[❯](bold red)";
+    settings = {
+      "$schema" = "https://starship.rs/config-schema.json";
+
+      format = lib.concatStrings [
+        "[](fg:#a3aed2)"
+        "[  ](bg:#a3aed2 fg:#090c0c)"
+        "[](bg:#769ff0 fg:#a3aed2)"
+        "$directory"
+        "[](fg:#769ff0 bg:#394260)"
+        "$git_branch"
+        "$git_status"
+        "[](fg:#394260 bg:#212736)"
+        "$nodejs"
+        "$conda"
+        "$bun"
+        "$rust"
+        "$golang"
+        "$php"
+        "[](fg:#212736 bg:#1d2230)"
+        "$time"
+        "[ ](fg:#1d2230)"
+        "$line_break"
+        "$character"
+      ];
+
+      directory = {
+        style = "fg:#e3e5e5 bg:#769ff0";
+        format = "[ $path ]($style)";
+        truncation_length = 3;
+        truncation_symbol = "…/";
+
+        substitutions = {
+          Documents = "󰈙 ";
+          Downloads = " ";
+          Music = " ";
+          Pictures = " ";
+        };
       };
 
-      directory.truncation_length = 4;
-      git_branch.symbol = " ";
+      git_branch = {
+        symbol = "";
+        style = "bg:#394260";
+        format = "[[ $symbol $branch ](fg:#769ff0 bg:#394260)]($style)";
+      };
 
-      # The SDKMAN `current` java shim is slow (>1s) and times out the prompt;
-      # skip the java version module entirely.
-      java.disabled = true;
+      git_status = {
+        style = "bg:#394260";
+        format = "[[($all_status$ahead_behind )](fg:#769ff0 bg:#394260)]($style)";
+      };
+
+      nodejs = {
+        symbol = "";
+        style = "bg:#212736";
+        format = "[[ $symbol ($version) ](fg:#769ff0 bg:#212736)]($style)";
+      };
+
+      conda = {
+        symbol = "";
+        style = "bg:#212736";
+        format = "[[ $symbol ($environment) ](fg:#769ff0 bg:#212736)]($style)";
+      };
+
+      bun = {
+        symbol = "";
+        style = "bg:#212736";
+        format = "[[ $symbol ($version) ](fg:#769ff0 bg:#212736)]($style)";
+      };
+
+      rust = {
+        symbol = "";
+        style = "bg:#212736";
+        format = "[[ $symbol ($version) ](fg:#769ff0 bg:#212736)]($style)";
+      };
+
+      golang = {
+        symbol = "";
+        style = "bg:#212736";
+        format = "[[ $symbol ($version) ](fg:#769ff0 bg:#212736)]($style)";
+      };
+
+      php = {
+        symbol = "";
+        style = "bg:#212736";
+        format = "[[ $symbol ($version) ](fg:#769ff0 bg:#212736)]($style)";
+      };
+
+      time = {
+        disabled = false;
+        time_format = "%R";
+        style = "bg:#1d2230";
+        format = "[[  $time ](fg:#a0a9cb bg:#1d2230)]($style)";
+      };
+
+      java = {
+        disabled = true;
+      };
     };
   };
 }
