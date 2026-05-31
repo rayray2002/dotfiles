@@ -1,6 +1,7 @@
 Host *
   ForwardAgent yes
   ForwardX11 yes
+  ForwardX11Trusted yes
 
 Host linux*
   HostName %h.csie.ntu.edu.tw
@@ -18,51 +19,36 @@ Host ws*
   HostName %h.csie.ntu.edu.tw
   User b09901171
 
-Host cad*
-  HostName %h.ee.ntu.edu.tw
-  User b09171
-
-Host lab_dennis
-  HostName 140.112.194.91
-  User ray
-  Port 1008
-
-Host lab_kn
-  HostName 140.112.194.91
-  User ray
-  Port 1012
-
-Host lab_a6000
-  HostName 140.112.194.91
-  User ray
-  Port 1013
-
-Host lab_4090
-  HostName 140.112.194.91
-  User ray
-  Port 1015
-
-Host lab_yck
-  HostName 140.112.194.91
-  User ray
-  Port 1014
-
 Host *.gps
   HostName %h.caltech.edu
   User brh
 
-Host lightdance-*
-  HostName %h.local
-  User pi
+Host xarm
+  User ray
+Match Host xarm exec "nc -z -w 1 100.119.115.83 22 2>/dev/null"
+    HostName 100.119.115.83
+Match Host xarm exec "nc -z -w 1 10.137.31.180 22 2>/dev/null"
+    HostName 10.137.31.180
 
-Host eofe*
-  HostName %h.mit.edu
-  User boruei
+Host snoopy
+  User borueihu
+# Match Host snoopy exec "nc -z -w 1 100.71.153.128 22 2>/dev/null"
+#     HostName 100.71.153.128
+# Match Host snoopy exec "nc -z -w 1 10.136.20.183 22 2>/dev/null"
+Host snoopy
+    HostName 10.136.20.183
+    ProxyJump xarm
 
-Host satori1
-  HostName satori-login-001.mit.edu
-  User boruei
+Host ray-desktop
+    User ray
+    Compression yes
 
-Host satori2
-  HostName satori-login-002.mit.edu
-  User boruei
+Match Host ray-desktop exec "nc -z -w 1 100.122.59.69 22 2>/dev/null"
+    HostName 100.122.59.69
+
+Host ray-desktop
+    HostName 192.168.12.204
+
+Host hrimfaxi
+    User ray
+    HostName 100.67.150.118
