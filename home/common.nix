@@ -1,5 +1,9 @@
 { ... }:
 {
+  imports = [
+    ../modules/tools.nix
+  ];
+
   home.username = "ray";
   home.stateVersion = "25.05";
 
