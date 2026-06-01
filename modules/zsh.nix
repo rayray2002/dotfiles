@@ -5,6 +5,7 @@
     enableCompletion = true;
     autosuggestion.enable = true;
     syntaxHighlighting.enable = true;
+    autocd = true;
 
     history = {
       size = 100000;
@@ -47,16 +48,16 @@
         src = pkgs.zsh-abbr;
         file = "share/zsh/zsh-abbr/zsh-abbr.plugin.zsh";
       }
-      {
-        name = "zsh-transient-prompt";
-        src = pkgs.fetchFromGitHub {
-          owner = "olets";
-          repo = "zsh-transient-prompt";
-          rev = "v1.0.1";
-          sha256 = "sha256-v4RuB/LL5/6d0FPDPrheFN5o1ZXKjIbfThz/sKSEuII="; 
-        };
-        file = "transient-prompt.zsh-theme";
-      }
+      # {
+      #   name = "zsh-transient-prompt";
+      #   src = pkgs.fetchFromGitHub {
+      #     owner = "olets";
+      #     repo = "zsh-transient-prompt";
+      #     rev = "v1.0.1";
+      #     sha256 = "sha256-v4RuB/LL5/6d0FPDPrheFN5o1ZXKjIbfThz/sKSEuII="; 
+      #   };
+      #   file = "transient-prompt.zsh-theme";
+      # }
     ];
 
     initContent = lib.mkMerge [
