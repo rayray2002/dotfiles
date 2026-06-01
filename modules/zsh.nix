@@ -63,6 +63,12 @@
     initContent = lib.mkMerge [
       (lib.mkOrder 500 ''
         setopt interactivecomments
+        bindkey '^[b' backward-word
+        bindkey '^[f' forward-word
+        bindkey '^[[1;3D' backward-word
+        bindkey '^[[1;3C' forward-word
+        bindkey '^[[1;9D' backward-word
+        bindkey '^[[1;9C' forward-word
       '')
       (lib.mkOrder 550 ''
         # Re-prioritize the Nix profile ahead of anything ~/.zprofile prepended
