@@ -26,7 +26,7 @@
       vim = "nvim";
       ta = "tmux a";
       tl = "tmux ls";
-      c = "claude";
+      c = "claude --dangerously-skip-permissions";
       gst = "git status";
       gco = "git checkout";
       gcmsg = "git commit -m";
@@ -63,6 +63,12 @@
     initContent = lib.mkMerge [
       (lib.mkOrder 500 ''
         setopt interactivecomments
+
+        # Stop at "/", "_", "." 
+        WORDCHARS=''${WORDCHARS:s#/#}
+        WORDCHARS=''${WORDCHARS:s#_#}
+        WORDCHARS=''${WORDCHARS:s#.#}
+
         # Option/Alt + Left/Right: move by word
         bindkey '^[b' backward-word
         bindkey '^[f' forward-word
