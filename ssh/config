@@ -52,3 +52,17 @@ Host ray-desktop
 Host hrimfaxi
     User ray
     HostName 100.67.150.118
+
+Host glamor_panda_shared
+  User franka_glamor
+Match Host glamor_panda_shared exec "nc -z -w 1 100.78.42.34 22 2>/dev/null"
+    HostName 100.78.42.34
+Match Host glamor_panda_shared exec "nc -z -w 1 10.23.74.233 22 2>/dev/null"
+    HostName 10.23.74.233
+
+Host glamor_panda_ray
+  User ray
+Match Host glamor_panda_ray exec "nc -z -w 1 100.78.42.34 22 2>/dev/null"
+    HostName 100.78.42.34
+Match Host glamor_panda_ray exec "nc -z -w 1 10.23.74.233 22 2>/dev/null"
+    HostName 10.23.74.233

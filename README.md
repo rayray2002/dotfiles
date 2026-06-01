@@ -12,7 +12,7 @@ Declarative shell environment managed with [home-manager](https://github.com/nix
    ```
 2. Clone and activate:
    ```bash
-   git clone <this-repo> ~/dotfiles && cd ~/dotfiles
+   git clone https://github.com/rayray2002/dotfiles.git ~/dotfiles && cd ~/dotfiles
    nix run home-manager/master -- switch -b backup --flake '.#ray@mac'   # or .#ray@linux
    ```
    `-b backup` renames any existing `~/.zshrc`, `~/.gitconfig`, etc. to `*.backup`
