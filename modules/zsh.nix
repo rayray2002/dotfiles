@@ -63,13 +63,25 @@
     initContent = lib.mkMerge [
       (lib.mkOrder 500 ''
         setopt interactivecomments
+        # Option/Alt + Left/Right: move by word
         bindkey '^[b' backward-word
         bindkey '^[f' forward-word
         bindkey '^[[1;3D' backward-word
         bindkey '^[[1;3C' forward-word
         bindkey '^[[1;9D' backward-word
         bindkey '^[[1;9C' forward-word
-      '')
+
+        # fn + Left/Right: beginning/end of line
+        bindkey '^[[H' beginning-of-line
+        bindkey '^[[F' end-of-line
+        bindkey '^[[1~' beginning-of-line
+        bindkey '^[[4~' end-of-line
+        bindkey '^[[7~' beginning-of-line
+        bindkey '^[[8~' end-of-line
+
+        # fn + Up/Down: page/history movement
+        bindkey '^[[5~' beginning-of-history
+        bindkey '^[[6~' end-of-history      '')
       (lib.mkOrder 550 ''
         # Re-prioritize the Nix profile ahead of anything ~/.zprofile prepended
         # (e.g. `brew shellenv` puts /opt/homebrew/bin first). .zshrc runs after
