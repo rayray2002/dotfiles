@@ -10,7 +10,7 @@
 
       format = lib.concatStrings [
         "[](fg:#a3aed2)"
-        "[  ](bg:#a3aed2 fg:#090c0c)"
+        "$os"
         "[](bg:#769ff0 fg:#a3aed2)"
         "$directory"
         "[](fg:#769ff0 bg:#394260)"
@@ -29,6 +29,24 @@
         "$line_break"
         "$character"
       ];
+
+      os = {
+        disabled = false;
+        style = "bg:#a3aed2 fg:#090c0c";
+        format = "[ $symbol ]($style)";
+
+        symbols = {
+          Macos = "";
+          NixOS = "󱄅";
+          Linux = "";
+          Ubuntu = "";
+          Debian = "";
+          Arch = "󰣇";
+          Fedora = "󰣛";
+          Windows = "󰍲";
+          Unknown = "󰟀";
+        };
+      };
 
       directory = {
         style = "fg:#e3e5e5 bg:#769ff0";

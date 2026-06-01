@@ -61,6 +61,9 @@
     ];
 
     initContent = lib.mkMerge [
+      (lib.mkOrder 500 ''
+        setopt interactivecomments
+      '')
       (lib.mkOrder 550 ''
         # Re-prioritize the Nix profile ahead of anything ~/.zprofile prepended
         # (e.g. `brew shellenv` puts /opt/homebrew/bin first). .zshrc runs after
