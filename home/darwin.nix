@@ -1,6 +1,6 @@
 { lib, ... }:
 {
-  imports = [ ./common.nix ];
+  imports = [ ./common.nix ../modules/claude-auto-update-darwin.nix ];
   home.homeDirectory = "/Users/ray";
 
   home.sessionVariables = {
