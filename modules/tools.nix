@@ -72,7 +72,9 @@
     nh                  # Clean Nix CLI wrapper
     nix-output-monitor  # Pretty build logs
   ] ++ [
-    # AI agent CLI — auto-updating via the claude-code-nix flake input
+    # AI agent CLIs — each on its own flake input so they can be bumped
+    # independently of the main nixpkgs pin.
     inputs.claude-code.packages.${pkgs.stdenv.hostPlatform.system}.default
+    inputs.nixpkgs-codex.legacyPackages.${pkgs.stdenv.hostPlatform.system}.codex
   ];
 }

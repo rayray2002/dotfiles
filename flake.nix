@@ -15,6 +15,10 @@
       url = "github:sadjow/claude-code-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    # Separate nixpkgs pin for the Codex CLI: it ships several releases a week,
+    # so it gets bumped on its own (`nix flake update nixpkgs-codex`) without
+    # dragging the whole world along with the main nixpkgs pin.
+    nixpkgs-codex.url = "github:NixOS/nixpkgs/nixos-unstable";
   };
 
   outputs = inputs@{ nixpkgs, home-manager, ... }:
