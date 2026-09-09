@@ -62,6 +62,8 @@
     hyperfine
     tokei
     jless
+    # networking
+    mosh                # 1.4+ — truecolor support (Ubuntu apt only ships 1.3.2)
     # agentic-coding helpers
     ast-grep
     difftastic

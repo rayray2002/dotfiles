@@ -25,10 +25,13 @@ Host *.gps
 
 Host xarm
   User ray
-Match Host xarm exec "nc -z -w 1 100.119.115.83 22 2>/dev/null"
-    HostName 100.119.115.83
+  ServerAliveInterval 15
+  ServerAliveCountMax 4
+  TCPKeepAlive yes
 Match Host xarm exec "nc -z -w 1 10.137.31.180 22 2>/dev/null"
     HostName 10.137.31.180
+Match Host xarm exec "nc -z -w 1 100.119.115.83 22 2>/dev/null"
+    HostName 100.119.115.83
 
 Host snoopy
   User borueihu
