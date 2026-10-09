@@ -20,7 +20,7 @@ jobs:
     outputs:
       changed: ${{ steps.lock.outputs.changed }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: DeterminateSystems/nix-installer-action@main
       - id: lock
         run: |
@@ -31,7 +31,7 @@ jobs:
             echo "changed=true" >> "$GITHUB_OUTPUT"
           fi
       - if: steps.lock.outputs.changed == 'true'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: lock
           path: |
@@ -46,8 +46,8 @@ jobs:
         os: [ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
         with:
           name: lock
       - uses: DeterminateSystems/nix-installer-action@main
@@ -57,8 +57,8 @@ jobs:
     needs: [update, build]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
         with:
           name: lock
       - id: body
@@ -75,7 +75,7 @@ jobs:
             echo EOF
           } >> "$GITHUB_OUTPUT"
           rm update.log
-      - uses: peter-evans/create-pull-request@v7
+      - uses: peter-evans/create-pull-request@v8
         with:
           branch: weekly-flake-update
           commit-message: "flake.lock: weekly update"

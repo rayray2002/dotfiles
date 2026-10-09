@@ -17,6 +17,6 @@ jobs:
         os: [ubuntu-latest, macos-latest]   # x86_64-linux hosts, the aarch64 Mac
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: DeterminateSystems/nix-installer-action@main
       - run: scripts/ci-build

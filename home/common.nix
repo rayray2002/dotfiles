@@ -11,6 +11,7 @@
     ../modules/ssh.nix
     ../modules/dots-sync.nix
     ../modules/no-root.nix
+    ../modules/secrets.nix
   ];
 
   home.username = host.user;
