@@ -39,7 +39,9 @@ let
       # Exiting it ends the session like a normal login shell. nixpkgs#zsh only
       # gets us into the namespace; the login shell is home-manager's zsh, also
       # exported as SHELL so tmux panes etc. don't fall back to /usr/bin/zsh.
-      ${np} IN_NIXSHELL=1 HOME=${cfg.home}
+      # ssh writes the X11 cookie to the real home; HOME changes below.
+      XAUTHORITY=''${XAUTHORITY:-${realHome}/.Xauthority}
+      ${np} IN_NIXSHELL=1 HOME=${cfg.home} XAUTHORITY
       # shellcheck disable=SC2016  # expanded by the inner zsh
       exec ${bin}/nix-portable nix shell nixpkgs#zsh --command zsh -fc \
         'z=${zsh}; [[ -x $z ]] || z=$(whence -p zsh); export SHELL=$z; exec $z -l'

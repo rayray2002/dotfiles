@@ -64,6 +64,20 @@ in
       fi
 
       mkdir -p ${home}/.codex
+      ${lib.optionalString pkgs.stdenv.hostPlatform.isLinux ''
+        # Linux: keep Codex's login in ~/.codex/auth.json. "auto"/"keyring"
+        # go through libsecret over D-Bus, which headless servers don't serve
+        # (and its entries are keyed by the CODEX_HOME path, which differs
+        # inside the rootless env).
+        cfgfile=${home}/.codex/config.toml
+        if ! grep -qs '^cli_auth_credentials_store' "$cfgfile"; then
+          if [[ -s $cfgfile ]]; then
+            ${pkgs.gnused}/bin/sed -i '1i cli_auth_credentials_store = "file"' "$cfgfile"
+          else
+            echo 'cli_auth_credentials_store = "file"' > "$cfgfile"
+          fi
+        fi
+      ''}
       for md in ${claudeDir}/CLAUDE.md ${home}/.codex/AGENTS.md; do
         # replace a link or an empty file; keep anything with content
         if [[ -L $md || ! -s $md ]]; then
