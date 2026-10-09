@@ -16,12 +16,16 @@ vim.lsp.config("*", {
 vim.lsp.config("basedpyright", {
   -- package.xml first, so a ROS package inside a repo is its own root
   root_markers = { "package.xml", "pyrightconfig.json", "pyproject.toml", "setup.py", "setup.cfg", "requirements.txt", ".git" },
-  before_init = function(_, config)
-    local p = require("dots.python").for_root(config.root_dir)
-    config.settings = vim.tbl_deep_extend("force", config.settings or {}, {
+  -- Per-project interpreter and import paths (dots.python). Set on the live
+  -- client and pushed to the server: basedpyright asks the client for its
+  -- settings, and the client's copy is made before before_init would run.
+  on_init = function(client)
+    local p = require("dots.python").for_root(client.root_dir)
+    client.settings = vim.tbl_deep_extend("force", client.settings or {}, {
       python = p.python and { pythonPath = p.python } or nil,
       basedpyright = { analysis = { extraPaths = p.extraPaths, typeCheckingMode = p.typeChecking } },
     })
+    client:notify("workspace/didChangeConfiguration", { settings = client.settings })
   end,
   settings = {
     basedpyright = {
