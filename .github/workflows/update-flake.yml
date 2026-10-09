@@ -1,0 +1,85 @@
+# Weekly full update: bump every flake input (nixpkgs, home-manager, ...),
+# build every host's configuration on Linux and macOS with the new lock, and
+# open (or refresh) a pull request with the result. Merging it is up to you;
+# hosts pick it up within an hour of the merge via their dots-sync timer.
+# claude-code keeps its own daily bump (update-claude-code.yml).
+name: weekly flake update
+
+on:
+  schedule:
+    - cron: "41 9 * * 1"   # Mondays
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    outputs:
+      changed: ${{ steps.lock.outputs.changed }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DeterminateSystems/nix-installer-action@main
+      - id: lock
+        run: |
+          nix flake update 2>&1 | tee update.log
+          if git diff --quiet flake.lock; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.lock.outputs.changed == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: lock
+          path: |
+            flake.lock
+            update.log
+
+  build:
+    needs: update
+    if: needs.update.outputs.changed == 'true'
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: lock
+      - uses: DeterminateSystems/nix-installer-action@main
+      - run: scripts/ci-build
+
+  pull-request:
+    needs: [update, build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: lock
+      - id: body
+        run: |
+          {
+            echo 'body<<EOF'
+            echo "Weekly \`nix flake update\`; every host's configuration built on Linux and macOS in [this run](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID})."
+            echo
+            echo '```'
+            grep -vE '^(unpacking|warning|copying)' update.log || true
+            echo '```'
+            echo
+            echo "Merge to roll it out: each host applies it within an hour (\`dots-status\` to watch)."
+            echo EOF
+          } >> "$GITHUB_OUTPUT"
+          rm update.log
+      - uses: peter-evans/create-pull-request@v7
+        with:
+          branch: weekly-flake-update
+          commit-message: "flake.lock: weekly update"
+          title: "flake.lock: weekly update"
+          body: ${{ steps.body.outputs.body }}
+          add-paths: flake.lock
+          delete-branch: true

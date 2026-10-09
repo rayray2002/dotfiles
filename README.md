@@ -94,6 +94,9 @@ target `<user>@<alias>`: `ray@mac`, `ray@ray-desktop`, `ray@xarm`, `ray@glamor_p
   `main` and on pull requests (Linux on Ubuntu, the Mac on macOS); `scripts/ci-build` does
   the same locally for your own platform. The daily claude-code bump builds the Linux
   hosts before it pushes.
+- **Weekly update** (`.github/workflows/update-flake.yml`, Mondays): bumps every input,
+  builds every host on Linux and macOS, and opens a `flake.lock: weekly update` PR listing
+  what changed. Merge it to roll out; nothing updates nixpkgs otherwise.
 - Old generations are garbage-collected weekly (`nix.gc`, kept for 14 days), except on
   rootless hosts.
 
