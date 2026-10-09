@@ -14,12 +14,13 @@
 # USC lab
 # ---------------------------------------------------------------------------
 
-# xarm: lab LAN when on campus, else tailnet (tailnet name: salep)
-Host xarm
+# xarm, a.k.a. salep (its hostname and tailnet name): lab LAN when on
+# campus, else tailnet
+Host xarm salep
   User ray
-Match host xarm exec "nc -z -w 1 10.137.31.180 22 2>/dev/null"
+Match host xarm,salep exec "nc -z -w 1 10.137.31.180 22 2>/dev/null"
   HostName 10.137.31.180
-Host xarm
+Host xarm salep
   HostName 100.119.115.83
 
 # snoopy1.usc.edu: tailnet direct (rootless userspace tailscaled under
@@ -81,7 +82,7 @@ Host hrimfaxi
 # X11 (XQuartz) only to machines we run GUIs on. Trusted mode is needed by
 # OpenGL apps like rviz, but it gives the remote full access to the local X
 # display, so it is not handed to every host (GitHub included).
-Host xarm snoopy glamor_panda_shared glamor_panda_ray ray-desktop hrimfaxi lab_*
+Host xarm salep snoopy glamor_panda_shared glamor_panda_ray ray-desktop hrimfaxi
   ForwardX11 yes
   ForwardX11Trusted yes
 
