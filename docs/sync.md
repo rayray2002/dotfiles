@@ -25,8 +25,8 @@ timer instead. Pushing *to* the Mac needs Remote Login on.
 
 | What | How |
 |---|---|
-| claude-code, daily | `update-claude-code` GitHub Action: bumps it, builds the Linux configs, pushes |
-| claude-code, now | `claude-update` (bump + `dots-sync`) |
+| claude-code and codex, daily | `update-claude-code` GitHub Action: bumps both, builds the Linux configs, pushes |
+| claude-code / codex, now | `claude-update` / `codex-update` (bump + `dots-sync`) |
 | everything, weekly | `update-flake` Action (Mondays): bumps all inputs, builds every config on Linux and macOS, opens a **`flake.lock: weekly update`** PR listing the changes. Merge it to roll out. |
 | anything, by hand | `nix flake update [input]`, then `dots-sync` |
 
@@ -37,7 +37,7 @@ Never leave lock changes uncommitted on a machine: they block its hourly sync.
 `.github/workflows/check.yml` builds every machine's configuration on each push to `main`
 and on pull requests (Linux configs on Ubuntu, the Mac's on macOS). `scripts/ci-build`
 does the same locally for your platform. Workflows' own pushes don't trigger it, so the
-claude-code bump builds before pushing.
+daily agent bump builds before pushing.
 
 ## Garbage collection
 

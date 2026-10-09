@@ -15,10 +15,14 @@ in
     enableZshIntegration = false;   # sourced below
     # fd: fast, skips .gitignored files, includes dotfiles
     defaultCommand = "fd --type f --hidden --exclude .git";
-    fileWidgetCommand = "fd --type f --hidden --exclude .git";
-    fileWidgetOptions = [ "--preview 'bat --color=always --style=numbers --line-range=:200 {}'" ];
-    changeDirWidgetCommand = "fd --type d --hidden --exclude .git";
-    changeDirWidgetOptions = [ "--preview 'eza -T -L 2 --color=always --icons {}'" ];
+    fileWidget = {
+      command = "fd --type f --hidden --exclude .git";
+      options = [ "--preview 'bat --color=always --style=numbers --line-range=:200 {}'" ];
+    };
+    changeDirWidget = {
+      command = "fd --type d --hidden --exclude .git";
+      options = [ "--preview 'eza -T -L 2 --color=always --icons {}'" ];
+    };
   };
 
   programs.zoxide = {

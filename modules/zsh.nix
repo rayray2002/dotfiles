@@ -60,7 +60,7 @@ let
       dots-sync "msg"  commit + push dotfiles and apply them on every host
       dots-status      every host: applied commit, last sync, current/behind/failing
       dots-secret      encrypted shared secrets (set / edit / list / rekey)
-      claude-update    bump claude-code now and dots-sync it
+      claude-update    bump claude-code now and dots-sync it (codex-update: codex)
       ssh-drop         close reused ssh connections (if one hangs)
       usegpu N         set CUDA_VISIBLE_DEVICES (whichgpu shows it)
       loop 'cmd' secs  rerun cmd every secs, clearing the screen
@@ -119,7 +119,7 @@ in
       # that isn't it (Ubuntu's /usr/bin/zsh, an old static zsh on PATH, or
       # tmux starting $SHELL) swaps itself for it before loading anything.
       # _HM_ZSH_SWAPPED stops a loop if the paths ever fail to match.
-      (lib.mkOrder 100 (lib.optionalString pkgs.stdenv.isLinux ''
+      (lib.mkOrder 100 (lib.optionalString pkgs.stdenv.hostPlatform.isLinux ''
         if [[ -o interactive && -z $_HM_ZSH_SWAPPED && -r /proc/$$/exe ]]; then
           () {
             local self=/proc/$$/exe ours=${config.home.profileDirectory}/bin/zsh

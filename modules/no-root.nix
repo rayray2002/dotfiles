@@ -104,7 +104,7 @@ let
 in
 lib.mkIf (host.noRoot != null) {
   assertions = [{
-    assertion = pkgs.stdenv.isLinux;
+    assertion = pkgs.stdenv.hostPlatform.isLinux;
     message = "hosts.nix: noRoot is only supported on Linux (nix-portable)";
   }];
 
@@ -139,6 +139,21 @@ lib.mkIf (host.noRoot != null) {
       fi
       run install -m 755 ${scriptDir}/$f ${bin}/$f
     done
+
+    # Codex inside the env uses the real home's ~/.codex (login, config, history).
+    # An env-only ~/.codex holding nothing but tmp/ (and our AGENTS.md link) is
+    # moved aside once.
+    if [[ -d ${realHome}/.codex && ! -L ${cfg.home}/.codex ]]; then
+      if [[ -d ${cfg.home}/.codex ]]; then
+        extra=$(find ${cfg.home}/.codex -mindepth 1 -maxdepth 1 ! -name tmp ! -name AGENTS.md | head -1)
+        if [[ -z $extra ]]; then
+          run mv ${cfg.home}/.codex ${cfg.home}/.codex.pre-dotfiles
+        else
+          warnEcho "${cfg.home}/.codex has its own files; not linking it to ${realHome}/.codex"
+        fi
+      fi
+      [[ -e ${cfg.home}/.codex ]] || run ln -s ${realHome}/.codex ${cfg.home}/.codex
+    fi
 
     run mkdir -p ${realHome}/.config/systemd/user
     for u in dots-sync.service dots-sync.timer; do

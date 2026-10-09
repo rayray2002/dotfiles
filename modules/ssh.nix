@@ -7,7 +7,7 @@ let
   entries = name: map (r: if builtins.isString r then { addr = r; } else r) (spec name).routes;
 
   localIps =
-    if pkgs.stdenv.isDarwin then "/sbin/ifconfig | awk '/inet /{print $2}'"
+    if pkgs.stdenv.hostPlatform.isDarwin then "/sbin/ifconfig | awk '/inet /{print $2}'"
     else "ip -4 -o addr show | awk '{print $4}' | cut -d/ -f1";
 
   # `ssh-probe ADDR`: exit 0 if ADDR answers on port 22 within 1 s. A private
@@ -16,7 +16,7 @@ let
   # instead of waiting out the timeout.
   sshProbe = pkgs.writeShellApplication {
     name = "ssh-probe";
-    runtimeInputs = with pkgs; [ netcat gawk coreutils ] ++ lib.optional stdenv.isLinux iproute2;
+    runtimeInputs = with pkgs; [ netcat gawk coreutils ] ++ lib.optional stdenv.hostPlatform.isLinux iproute2;
     text = ''
       addr=$1
       case $addr in

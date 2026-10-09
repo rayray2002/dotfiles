@@ -15,7 +15,7 @@ shared credentials, and machines that keep themselves in sync.
 | `ta` | tmux: attach, or start a session |
 | `dots-secret` | add / edit encrypted secrets |
 | `gpus`, `sgpu`, `snew`, `sq` | Slurm on snoopy |
-| `c`, `cr`, `cco` | Claude Code: start, resume, continue |
+| `c`, `cr`, `cco` | Claude Code: start, resume, continue (`codex` for Codex) |
 
 ## Documentation
 
@@ -43,12 +43,13 @@ shared credentials, and machines that keep themselves in sync.
 | `modules/git.nix`, `python.nix` | git + delta; uv + micromamba |
 | `modules/tmux.nix`, `tmux/.tmux.conf.local` | tmux, its plugins and settings |
 | `modules/ssh.nix`, `ssh/` | ssh config, routes, pinned host keys, login keys + sync script |
-| `modules/dots-sync.nix` | `dots-sync`, `dots-pull`, `dots-status`, `claude-update`, hourly timer |
+| `modules/dots-sync.nix` | `dots-sync`, `dots-pull`, `dots-status`, `claude-update`/`codex-update`, hourly timer |
 | `modules/no-root.nix`, `scripts/bootstrap-no-root` | machines without root (nix-portable) |
 | `modules/secrets.nix`, `secrets/` | `dots-secret`, recipients, encrypted secrets |
 | `modules/slurm.nix` | Slurm helpers |
-| `modules/claude.nix`, `claude/CLAUDE.md` | Claude Code settings and shared instructions |
-| `.github/workflows/`, `scripts/ci-build` | build checks, daily claude-code bump, weekly update PR |
+| `modules/claude.nix`, `claude/CLAUDE.md` | Claude Code / Codex settings and shared instructions |
+| `CLAUDE.md` (= `AGENTS.md`) | instructions for agents working on this repo |
+| `.github/workflows/`, `scripts/ci-build` | build checks, daily claude-code + codex bump, weekly update PR |
 | `docs/` | the documentation above |
 
 ## Scope

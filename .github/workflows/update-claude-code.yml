@@ -1,10 +1,11 @@
-# Daily claude-code bump. flake.lock is only ever changed here (or by a manual
+# Daily claude-code and codex bump (codex has its own nixpkgs pin,
+# nixpkgs-codex, so it moves without the rest of nixpkgs). flake.lock is only ever changed here (or by a manual
 # `claude-update` / `nix flake update` that goes through dots-sync), never by a
 # timer on each machine, so the hosts' working trees stay clean and pullable.
 # Hosts pick the new commit up within an hour via their dots-sync timer.
 # The Linux configurations are built first, so a bump that breaks them is
 # never pushed (the Mac build runs in check.yml on human pushes).
-name: update claude-code
+name: update claude-code and codex
 
 on:
   schedule:
@@ -20,8 +21,8 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: DeterminateSystems/nix-installer-action@main
-      - name: Bump claude-code
-        run: nix flake update claude-code
+      - name: Bump claude-code and codex
+        run: nix flake update claude-code nixpkgs-codex
       - name: Make sure every host still evaluates
         run: |
           # shellcheck disable=SC2016  # a Nix expression, not shell
@@ -31,8 +32,8 @@ jobs:
         run: scripts/ci-build
       - name: Commit and push
         run: |
-          git diff --quiet flake.lock && { echo "claude-code already current"; exit 0; }
+          git diff --quiet flake.lock && { echo "claude-code and codex already current"; exit 0; }
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -am "flake.lock: bump claude-code"
+          git commit -am "flake.lock: bump claude-code and codex"
           git push

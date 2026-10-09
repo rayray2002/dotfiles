@@ -36,7 +36,7 @@ see and keep the real command: `gst` git status, `gco` git checkout, `gcmsg` git
 | `z <part>`, `zi` | jump to a frequent directory (zoxide); pick with fzf |
 | `cd -<Tab>` | recent directories; a directory name alone also cd's into it |
 
-Functions: `dots-sync`, `dots-status`, `dots-pull`, `claude-update` ([sync.md](sync.md)),
+Functions: `dots-sync`, `dots-status`, `dots-pull`, `claude-update`, `codex-update` ([sync.md](sync.md)),
 `dots-secret` ([secrets.md](secrets.md)), `ssh-drop` ([ssh.md](ssh.md)), `usegpu N` /
 `whichgpu` (CUDA_VISIBLE_DEVICES), `loop 'cmd' secs`, and on snoopy the Slurm helpers
 ([slurm.md](slurm.md)).

@@ -158,6 +158,9 @@ in
       claude-update() {
         ( cd ${flakeDir} && nix flake update claude-code ) && dots-sync "flake.lock: bump claude-code"
       }
+      codex-update() {
+        ( cd ${flakeDir} && nix flake update nixpkgs-codex ) && dots-sync "flake.lock: bump codex"
+      }
 
       [[ -s ${stateDir}/error ]] && print -P "%F{yellow}dotfiles auto-sync: $(<${stateDir}/error)%f"
     '';
@@ -167,7 +170,7 @@ in
     '';
 
     # Without root these units are written as real files by modules/no-root.nix.
-    systemd.user = lib.mkIf (pkgs.stdenv.isLinux && !noRoot) {
+    systemd.user = lib.mkIf (pkgs.stdenv.hostPlatform.isLinux && !noRoot) {
       services.dots-sync = {
         Unit.Description = "Pull ~/dotfiles from GitHub and apply it with home-manager";
         Service = {
@@ -186,7 +189,7 @@ in
       };
     };
 
-    launchd.agents.dots-sync = lib.mkIf pkgs.stdenv.isDarwin {
+    launchd.agents.dots-sync = lib.mkIf pkgs.stdenv.hostPlatform.isDarwin {
       enable = true;
       config = {
         ProgramArguments = [ dotsPullBin ];

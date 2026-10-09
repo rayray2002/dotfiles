@@ -1,6 +1,7 @@
-# Claude Code, the same on every machine:
-# - ~/.claude/CLAUDE.md links to claude/CLAUDE.md in the repo (still writable;
-#   memory added from Claude edits the repo file, shared with dots-sync).
+# Claude Code and Codex, the same on every machine:
+# - ~/.claude/CLAUDE.md and ~/.codex/AGENTS.md link to claude/CLAUDE.md in the
+#   repo (still writable; memory added from Claude edits the repo file, shared
+#   with dots-sync).
 # - A few settings are merged into ~/.claude/settings.json at activation:
 #   plugins, their marketplaces and the claude-hud status line. Everything else
 #   in that file (model, permissions, ...) stays Claude's to change.
@@ -39,10 +40,16 @@ let
       openai-codex.source = { source = "github"; repo = "openai/codex-plugin-cc"; };
     };
     statusLine = { type = "command"; command = "${statusline}/bin/claude-statusline"; };
+    # No "Co-Authored-By: Claude" trailer, PR attribution or session link in
+    # commits and PRs (includeCoAuthoredBy is the older name of the same switch).
+    attribution = { commit = ""; pr = ""; sessionUrl = false; };
+    includeCoAuthoredBy = false;
   });
 in
 {
-  home.activation.claudeCode = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+  # After noRootEntrypoints so that on rootless hosts ~/.codex is already the
+  # link to the real home's (the name is simply ignored elsewhere).
+  home.activation.claudeCode = lib.hm.dag.entryAfter [ "writeBoundary" "noRootEntrypoints" ] ''
     mkdir -p ${claudeDir}
     if [[ ! -v DRY_RUN ]]; then
       f=${claudeDir}/settings.json
@@ -56,12 +63,15 @@ in
         warnEcho "${claudeDir}/settings.json isn't valid JSON; left it alone"
       fi
 
-      md=${claudeDir}/CLAUDE.md
-      if [[ -L $md || ! -e $md ]]; then
-        ln -sfn ${repoDir}/claude/CLAUDE.md "$md"
-      else
-        warnEcho "$md is a regular file, not replaced; move its content to claude/CLAUDE.md in the repo"
-      fi
+      mkdir -p ${home}/.codex
+      for md in ${claudeDir}/CLAUDE.md ${home}/.codex/AGENTS.md; do
+        # replace a link or an empty file; keep anything with content
+        if [[ -L $md || ! -s $md ]]; then
+          ln -sfn ${repoDir}/claude/CLAUDE.md "$md"
+        else
+          warnEcho "$md has its own content, not replaced; move it to claude/CLAUDE.md in the repo"
+        fi
+      done
     fi
   '';
 }
