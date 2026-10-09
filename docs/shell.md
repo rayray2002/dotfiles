@@ -58,6 +58,23 @@ To add your own: shorthands that expand go in `expandingAliases`, plain ones in 
   static zsh) replaces itself with home-manager's zsh before loading the config, since
   this config's compiled modules (fzf-tab) only load there.
 
+## Completion
+
+Tab completion covers the commands in use (`modules/completions.nix`):
+
+| Commands | From |
+|---|---|
+| gh, uv, codex, nh, rg, fd, bat, eza, atuin, home-manager, nix, ... | the Nix packages themselves |
+| `conda`, `mamba`, `micromamba` (incl. env names for `activate`) | [conda-zsh-completion](https://github.com/conda-incubator/conda-zsh-completion), patched for micromamba |
+| `sbatch`, `squeue`, `scontrol`, `scancel`, `sacct`, `srun`, ... (snoopy) | the zsh completion contributed to [SchedMD bug 7786](https://support.schedmd.com/show_bug.cgi?id=7786) |
+| `systemctl`, `journalctl`, `docker`, ... | the system's (Ubuntu vendor completions, Homebrew on the Mac) |
+| `docker`, `tailscale` when not from Nix | generated on first use from the tool itself, cached in `~/.cache/zsh/completions` |
+| `dots-secret`, `sgpu`, `slog` | `zsh/completions/` in this repo |
+
+New completions are picked up after a switch (it resets the completion cache) or the
+next day. To add one, drop `_name` into `zsh/completions/`, or add a self-completing tool
+to `selfCompleting` in `modules/completions.nix`.
+
 ## Prompt and theme
 
 Starship ("Tokyo Night" colours): OS, directory, git branch/status, language versions,
