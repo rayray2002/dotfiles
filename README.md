@@ -151,7 +151,7 @@ per-host file rather than the shared `modules/python.nix`:
 |------|------|-----|
 | `home/darwin.nix` (the Mac) | `~/miniforge3` | reuses the pre-existing miniforge envs (`base`, `wam`, `telegram`, …) |
 | `home/linux.nix` (Linux hosts) | `~/miniforge3` | matches the existing roots there; a fresh machine could use a clean `~/micromamba` |
-| `home/hosts/snoopy.nix` | `~/micromamba` in `nixhome` | fresh Nix-native root inside the rootless env |
+| `home/hosts/snoopy.nix` | `/scr/borueihu/miniforge3` | the existing miniforge install with its envs; `$HOME` there is the separate `nixhome` |
 
 Environment *contents* are never stored in the repo — on a new machine you recreate
 them from spec. The legacy mac root (`~/miniforge3`) can't be renamed by moving it
