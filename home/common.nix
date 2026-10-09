@@ -1,4 +1,4 @@
-{ host, ... }:
+{ config, host, lib, ... }:
 {
   imports = [
     ../modules/tools.nix
@@ -12,6 +12,8 @@
     ../modules/dots-sync.nix
     ../modules/no-root.nix
     ../modules/secrets.nix
+    ../modules/slurm.nix
+    ../modules/claude.nix
   ];
 
   home.username = host.user;
@@ -22,6 +24,20 @@
   home.enableNixpkgsReleaseCheck = false;
 
   programs.home-manager.enable = true;
+
+  # Shared credentials, decrypted from secrets/<name>.age at activation
+  # (modules/secrets.nix). Each switches on once its encrypted file is in
+  # the repo: `dots-secret set <name> < file`, then commit.
+  dots.secrets = lib.mkMerge [
+    (lib.mkIf (builtins.pathExists ../secrets/netrc.age) {
+      netrc.target = "${config.home.homeDirectory}/.netrc";   # wandb login
+    })
+    (lib.mkIf (builtins.pathExists ../secrets/huggingface-token.age) {
+      # $HF_HOME/token when a host sets HF_HOME (snoopy keeps it on /scr)
+      huggingface-token.target =
+        "${config.home.sessionVariables.HF_HOME or "${config.home.homeDirectory}/.cache/huggingface"}/token";
+    })
+  ];
 
   # Every dots-sync that brings a change adds a generation; drop the ones
   # older than two weeks (and the store paths only they used) once a week.

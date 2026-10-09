@@ -21,6 +21,8 @@ let
     ta = "tmux attach || tmux new-session";   # attach, or start one
     tl = "tmux ls";
     c = "claude --dangerously-skip-permissions";
+    cr = "claude --resume";      # pick a past session
+    cco = "claude --continue";   # continue the last one here
     # `mamba` is defined in modules/python.nix *after* the micromamba shell hook,
     # because the hook output contains a literal `mamba()` block that collides
     # with a pre-existing `mamba` alias at parse time.

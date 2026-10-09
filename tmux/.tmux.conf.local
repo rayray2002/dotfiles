@@ -366,6 +366,12 @@ set -g history-limit 50000
 # the local clipboard through the terminal (OSC 52; iTerm2 allows it)
 set -s set-clipboard on
 
+# Claude Code (and other TUIs) inside tmux: Shift+Enter and other modified keys
+# reach the app, and its notifications (OSC 9/777) pass through to iTerm2
+set -s extended-keys on
+set -as terminal-features 'xterm*:extkeys'
+set -g allow-passthrough on
+
 # start with mouse mode enabled
 set -g mouse on
 

@@ -109,6 +109,13 @@ lib.mkIf (host.noRoot != null) {
   }];
 
   home.homeDirectory = lib.mkForce cfg.home;
+  # Jobs started outside the env (Slurm, cron) use the real home, so the
+  # shared credentials go there too.
+  dots.secrets = lib.mkMerge [
+    (lib.mkIf (builtins.pathExists ../secrets/netrc.age) {
+      netrc-real-home = { file = ../secrets/netrc.age; target = "${realHome}/.netrc"; };
+    })
+  ];
   # The real account's shell is the system zsh; inside the env use ours.
   home.sessionVariables.SHELL = zsh;
   # nix, hm-switch, nixshell, dots-pull

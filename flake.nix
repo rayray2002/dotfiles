@@ -30,7 +30,7 @@
           pkgs = import nixpkgs { inherit system; };
           extraSpecialArgs = {
             inherit inputs hosts;
-            host = { noRoot = null; } // h // { inherit name; };
+            host = { noRoot = null; slurm = null; } // h // { inherit name; };
           };
           modules = [
             (if lib.hasSuffix "darwin" system then ./home/darwin.nix else ./home/linux.nix)
