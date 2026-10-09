@@ -45,6 +45,11 @@ vim.lsp.config("basedpyright", {
           reportUnknownVariableType = "none", reportUnknownParameterType = "none",
           reportUnknownLambdaType = "none", reportMissingTypeStubs = "none",
           reportMissingParameterType = "none", reportAny = "none", reportExplicitAny = "none",
+          reportUndefinedVariable = "none", -- ruff F821 reports it
+          -- "may be None" checks: worth seeing, but not as errors in research code
+          reportOptionalMemberAccess = "warning", reportOptionalSubscript = "warning",
+          reportOptionalIterable = "warning", reportOptionalCall = "warning",
+          reportOptionalOperand = "warning",
         },
         inlayHints = { variableTypes = false, callArgumentNames = false, functionReturnTypes = false },
       },
