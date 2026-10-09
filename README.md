@@ -90,11 +90,22 @@ target `<user>@<alias>`: `ray@mac`, `ray@ray-desktop`, `ray@xarm`, `ray@glamor_p
   Action, or `claude-update` / `nix flake update` followed by `dots-sync`. Never leave
   lock changes uncommitted on a host — they block its auto-sync.
 - Roll back the last change: `home-manager switch --rollback`
+- **CI** (`.github/workflows/check.yml`) builds every host's configuration on each push to
+  `main` and on pull requests (Linux on Ubuntu, the Mac on macOS); `scripts/ci-build` does
+  the same locally for your own platform. The daily claude-code bump builds the Linux
+  hosts before it pushes.
+- Old generations are garbage-collected weekly (`nix.gc`, kept for 14 days), except on
+  rootless hosts.
+
+`dots-status` shows every host at a glance: the commit it last applied, when its sync
+last ran cleanly, and whether it is current with GitHub's `main`, behind, failing (with
+the reason) or unreachable.
 
 When a host doesn't update:
 
 | Check | Command |
 |---|---|
+| all hosts at once | `dots-status` |
 | why the last auto-sync stopped | printed in the next shell; also `~/.local/state/dots-sync/error` |
 | run it by hand, with output | `dots-pull` |
 | a push from `dots-sync` | `~/.local/state/dots-sync/<host>.log` on the machine you ran it from |
@@ -226,6 +237,7 @@ Only public material lives here; private keys never leave the machine that made 
 | `modules/no-root.nix`, `scripts/bootstrap-no-root` | hosts without root: nix-portable, separate home, generated wrappers |
 | `home/hosts/<alias>.nix` | optional per-machine settings, imported automatically |
 | `.github/workflows/update-claude-code.yml` | daily claude-code lock bump |
+| `.github/workflows/check.yml`, `scripts/ci-build` | build every host's config on push / PR |
 
 ## Scope
 

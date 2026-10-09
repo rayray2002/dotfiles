@@ -12,6 +12,19 @@ let
   # "mac ray@mac ray-desktop ray@ray-desktop ..." for a zsh associative array.
   syncTargets = lib.concatStringsSep " "
     (lib.mapAttrsToList (name: h: "${name} ${h.user}@${name}") hosts);
+  # Each host's dots-sync state dir, as the remote shell should expand it
+  # (rootless hosts keep their home-manager home elsewhere).
+  statePaths = lib.concatStringsSep " " (lib.mapAttrsToList (name: h:
+    "${name} ${if (h.noRoot or null) != null then "${h.noRoot.home}/.local/state/dots-sync"
+               else "'$HOME/.local/state/dots-sync'"}") hosts);
+  # Prints "<applied commit>|<last successful check>|<error>" for one host.
+  statusProbe = pkgs.writeText "dots-status-probe" ''
+    eval "s=$1"
+    a=$(cut -c1-7 "$s/applied" 2>/dev/null)
+    c=$(date -r "$s/checked" '+%m-%d %H:%M' 2>/dev/null)
+    e=$(head -c 100 "$s/error" 2>/dev/null | tr '|\n' '  ')
+    printf '%s|%s|%s\n' "$a" "$c" "$e"
+  '';
   # Extra PATH for `ssh <host> dots-pull`: rootless hosts keep it in <location>/bin.
   remotePaths = lib.concatStringsSep " " (lib.mapAttrsToList (name: h:
     "${name} ${if (h.noRoot or null) != null then "${h.noRoot.location}/bin" else "-"}") hosts);
@@ -47,6 +60,7 @@ let
       echo "$head" > "$state/applied"
     fi
     rm -f "$state/error"
+    date > "$state/checked"
   '';
 
   # runtimeInputs pins the tools so it works under systemd/launchd's bare PATH.
@@ -105,6 +119,38 @@ in
               &>$logs/$h.log && print "✓ $h" || print "✗ $h  ($logs/$h.log)" ) &
         done
         wait
+      }
+
+      # One line per host: the commit it last applied, when its sync last ran
+      # cleanly, and whether it is current with GitHub's main or stuck.
+      dots-status() {
+        setopt local_options no_monitor
+        local -A state=( ${statePaths} )
+        local tmp=$(mktemp -d) h head a c e line
+        git -C ${flakeDir} fetch --quiet ${publicRemote} +main:refs/remotes/origin/main 2>/dev/null
+        head=$(git -C ${flakeDir} rev-parse --short=7 origin/main)
+        for h in ''${(k)state}; do
+          (
+            if [[ $h == ${host.name} ]]; then line=$(sh ${statusProbe} "''${state[$h]}")
+            else line=$(ssh -o ConnectTimeout=5 -o BatchMode=yes $h sh -s -- "''${state[$h]}" < ${statusProbe} 2>/dev/null) || line="!unreachable"
+            fi
+            print -r -- "$line" > $tmp/$h
+          ) &
+        done
+        wait
+        print -P "%BGitHub main: $head%b"
+        printf '%-18s %-8s %-12s %s\n' host applied last-check status
+        for h in ''${(ko)state}; do
+          IFS='|' read -r a c e < $tmp/$h
+          if [[ $a == '!unreachable' ]]; then line="%F{red}✗ unreachable%f"; a=; c=
+          elif [[ -n $e ]]; then line="%F{red}✗ $e%f"
+          elif [[ -z $a ]]; then line="%F{yellow}· never applied%f"
+          elif [[ $a == $head ]]; then line="%F{green}✓ current%f"
+          else line="%F{yellow}↻ behind main%f"
+          fi
+          printf '%-18s %-8s %-12s ' $h "''${a:--}" "''${c:--}"; print -P -- "$line"
+        done
+        rm -r -- $tmp
       }
 
       # Bump claude-code now instead of waiting for the daily CI bump

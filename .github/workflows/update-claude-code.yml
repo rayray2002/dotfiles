@@ -2,6 +2,8 @@
 # `claude-update` / `nix flake update` that goes through dots-sync), never by a
 # timer on each machine, so the hosts' working trees stay clean and pullable.
 # Hosts pick the new commit up within an hour via their dots-sync timer.
+# The Linux configurations are built first, so a bump that breaks them is
+# never pushed (the Mac build runs in check.yml on human pushes).
 name: update claude-code
 
 on:
@@ -25,6 +27,8 @@ jobs:
           # shellcheck disable=SC2016  # a Nix expression, not shell
           nix eval --raw .#homeConfigurations --apply \
             'cs: builtins.concatStringsSep "\n" (map (n: n + " " + cs.${n}.activationPackage.drvPath) (builtins.attrNames cs))'
+      - name: Build the Linux hosts with the bump
+        run: scripts/ci-build
       - name: Commit and push
         run: |
           git diff --quiet flake.lock && { echo "claude-code already current"; exit 0; }

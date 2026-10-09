@@ -21,4 +21,14 @@
   home.enableNixpkgsReleaseCheck = false;
 
   programs.home-manager.enable = true;
+
+  # Every dots-sync that brings a change adds a generation; drop the ones
+  # older than two weeks (and the store paths only they used) once a week.
+  # Not on rootless hosts: there nix-portable's own Nix lives in the store too,
+  # and their store sits on a large scratch disk anyway.
+  nix.gc = {
+    automatic = host.noRoot == null;
+    dates = "weekly";
+    options = "--delete-older-than 14d";
+  };
 }

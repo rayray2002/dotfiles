@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# Build (not just evaluate) every home configuration for the system this runs
+# on, so a config that evaluates but fails to build is caught before any
+# machine pulls it. Used by CI (Linux and macOS runners) and fine to run locally.
+#
+#   scripts/ci-build
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+system=$(nix eval --raw --impure --expr builtins.currentSystem)
+targets=()
+while IFS= read -r t; do targets+=("$t"); done < <(
+  nix eval --json .#homeConfigurations --apply "cs: builtins.filter
+    (n: cs.\${n}.activationPackage.system == \"$system\") (builtins.attrNames cs)" |
+  jq -r '.[]')
+[[ ${#targets[@]} -gt 0 ]] || { echo "no configurations for $system"; exit 0; }
+
+echo "building for $system: ${targets[*]}"
+installables=()
+for t in "${targets[@]}"; do installables+=(".#homeConfigurations.\"$t\".activationPackage"); done
+nix build --no-link --print-build-logs "${installables[@]}"
+echo "all ${#targets[@]} configurations built"
