@@ -1,15 +1,14 @@
 # Tab completion for the commands I use that zsh / home-manager don't cover.
 #
 # Search order (first match wins):
-#   1. ours: zsh/completions/ (dots-secret, sgpu, slog), conda-zsh-completion
-#      (conda, mamba, micromamba), Slurm's (sbatch, squeue, scontrol, ...) on
-#      Slurm hosts
-#   2. generated at first use for tools outside Nix that print their own
+#   1. generated at first use for tools outside Nix that print their own
 #      (docker, tailscale), cached in ~/.cache/zsh/completions and refreshed
 #      when the tool is updated
-#   3. the Nix profile's completions (gh, uv, codex, nh, ...) -- found through
-#      $NIX_PROFILES only on some machines, so added explicitly
-#   4. the system's: Ubuntu's vendor completions (systemctl, journalctl, ...),
+#   2. the Nix profile's: every package's (gh, uv, codex, nh, ...) and ours from
+#      zsh/completions/ (dots-secret, sgpu, slog), conda-zsh-completion (conda,
+#      mamba, micromamba) and Slurm's (sbatch, squeue, ...) on Slurm hosts.
+#      Found through $NIX_PROFILES only on some machines, so added explicitly.
+#   3. the system's: Ubuntu's vendor completions (systemctl, journalctl, ...),
 #      Homebrew's on the Mac
 { config, lib, pkgs, inputs, host, ... }:
 let
@@ -22,11 +21,14 @@ let
     hash = "sha256-XoHEYG3BeGvfAy0YbxNCZD2II2S/b8ZPKRwmD+ZR4BU=";
   };
 
+  # Installed into the profile like any package's completions (a bare
+  # /nix/store path in $fpath makes compinit flag /nix/store as insecure).
   ours = pkgs.runCommand "zsh-extra-completions" { } ''
-    mkdir -p $out
-    cp ${../zsh/completions}/_* $out/
-    cp ${inputs.conda-zsh-completion}/_conda $out/
-    ${lib.optionalString ((host.slurm or null) != null) "cp ${slurmCompletion} $out/_slurm"}
+    d=$out/share/zsh/site-functions
+    mkdir -p $d
+    cp ${../zsh/completions}/_* $d/
+    cp ${inputs.conda-zsh-completion}/_conda $d/
+    ${lib.optionalString ((host.slurm or null) != null) "cp ${slurmCompletion} $d/_slurm"}
   '';
 
   # command -> arguments that make it print its zsh completion
@@ -37,6 +39,8 @@ let
     else [ "/usr/share/zsh/vendor-completions" "/usr/local/share/zsh/site-functions" ];
 in
 {
+  home.packages = [ ours ];
+
   # Runs before compinit (programs.zsh.completionInit is order 570).
   programs.zsh.initContent = lib.mkOrder 560 ''
     () {
@@ -56,7 +60,7 @@ in
       done
       # a new completion file needs a fresh dump to be picked up
       [[ -n $fresh ]] && rm -f ''${ZDOTDIR:-$HOME}/.zcompdump
-      fpath=(${ours} $cache ${config.home.profileDirectory}/share/zsh/site-functions $fpath)
+      fpath=($cache ${config.home.profileDirectory}/share/zsh/site-functions $fpath)
       local d
       for d in ${toString systemDirs}; do [[ -d $d ]] && fpath+=($d); done
     }

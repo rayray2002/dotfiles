@@ -1,4 +1,4 @@
-{ config, lib, pkgs, ... }:
+{ config, lib, pkgs, host, ... }:
 let
   # Shorthands that expand in place when you type a space, so what you see,
   # edit and later find in history is the real command.
@@ -81,6 +81,8 @@ in
     syntaxHighlighting.enable = true;
     autocd = true;
 
+    # On rootless hosts (-u): inside nix-portable's namespace every root-owned
+    # system file shows up as owned by nobody, which compaudit calls insecure.
     # compaudit + a full $fpath rescan cost ~150 ms per shell. Do that at most
     # once a day; home-manager switch deletes the dump (below), so completions
     # for newly installed packages still show up right away.
@@ -89,7 +91,7 @@ in
       () {
         local dump=''${ZDOTDIR:-$HOME}/.zcompdump
         local -a stale=( ''${dump}(N.mh+24) )
-        if [[ ! -s $dump ]] || (( $#stale )); then compinit; else compinit -C; fi
+        if [[ ! -s $dump ]] || (( $#stale )); then compinit ${lib.optionalString (host.noRoot != null) "-u"}; else compinit -C; fi
       }
     '';
 
