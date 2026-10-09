@@ -14,4 +14,7 @@
                     flake = "/scr/borueihu/dotfiles-nix";
                   }; };
   xarm        = { system = "x86_64-linux";   user = "ray"; };  # tailnet name: salep
+  # Franka/Panda workstation (glamor-citrine); single-user Nix owned by ray.
+  # The other login on it, glamor_panda_shared, is a shared lab account: not managed.
+  glamor_panda_ray = { system = "x86_64-linux"; user = "ray"; };
 }

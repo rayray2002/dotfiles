@@ -72,7 +72,8 @@ How it differs from a normal host (`modules/no-root.nix`):
 ## Daily use
 
 Machines are listed in `hosts.nix` (ssh alias → system, user); each gets a flake
-target `<user>@<alias>`: `ray@mac`, `ray@ray-desktop`, `ray@xarm`, `borueihu@snoopy`.
+target `<user>@<alias>`: `ray@mac`, `ray@ray-desktop`, `ray@xarm`, `ray@glamor_panda_ray`,
+`borueihu@snoopy`.
 
 - **Edit on any machine, then `dots-sync "message"`.** It commits tracked changes,
   switches locally first (a broken config is never pushed), pushes, and runs
