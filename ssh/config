@@ -1,71 +1,92 @@
-Host *
-  ForwardAgent yes
-  ForwardX11 yes
-  ForwardX11Trusted yes
+# ssh client config, symlinked to ~/.ssh/config by modules/tmux.nix.
+# Edit here, then: home-manager switch --flake ~/dotfiles#ray@mac  (or ray@linux)
+#
+# ssh keeps the FIRST value it finds for each option, so order matters:
+#   * a `Match ... exec` probe goes before the `Host` block that is its fallback
+#   * `Host *` defaults go last, so any host above can override them
+#
+# Multi-route hosts probe an address with `nc -z -w 1` (costs up to 1 s when it
+# is down) and use it if port 22 answers; otherwise the fallback block applies.
+# `Match host` compares against the HostName chosen so far, so once one probe
+# succeeds the later probes for that host are skipped.
 
-Host linux*
+# ---------------------------------------------------------------------------
+# USC lab
+# ---------------------------------------------------------------------------
+
+# xarm: lab LAN when on campus, else tailnet (tailnet name: salep)
+Host xarm
+  User ray
+Match host xarm exec "nc -z -w 1 10.137.31.180 22 2>/dev/null"
+  HostName 10.137.31.180
+Host xarm
+  HostName 100.119.115.83
+
+# snoopy1.usc.edu: tailnet direct (rootless userspace tailscaled under
+# systemd --user); if that is down, LAN address via xarm
+Host snoopy
+  User borueihu
+Match host snoopy exec "nc -z -w 1 100.71.153.128 22 2>/dev/null"
+  HostName 100.71.153.128
+  ProxyJump none
+Host snoopy
+  HostName 10.137.35.135
+  ProxyJump xarm
+
+# Franka/Panda workstation (tailnet name: glamor-citrine): tailnet, else LAN
+Host glamor_panda_shared
+  User franka_glamor
+Host glamor_panda_ray
+  User ray
+Match host glamor_panda_shared,glamor_panda_ray exec "nc -z -w 1 100.78.42.34 22 2>/dev/null"
+  HostName 100.78.42.34
+Host glamor_panda_shared glamor_panda_ray
+  HostName 10.23.74.233
+
+# ---------------------------------------------------------------------------
+# Personal
+# ---------------------------------------------------------------------------
+
+# ray-desktop: tailnet, else home LAN
+Host ray-desktop
+  User ray
+  Compression yes
+Match host ray-desktop exec "nc -z -w 1 100.122.59.69 22 2>/dev/null"
+  HostName 100.122.59.69
+Host ray-desktop
+  HostName 192.168.12.204
+
+Host hrimfaxi
+  User ray
+  HostName 100.67.150.118
+
+# ---------------------------------------------------------------------------
+# Legacy school accounts
+# ---------------------------------------------------------------------------
+
+# NTU CSIE workstations, e.g. `ssh linux1` -> linux1.csie.ntu.edu.tw
+Host linux* oasis* meow* ws*
   HostName %h.csie.ntu.edu.tw
   User b09901171
 
-Host oasis*
-  HostName %h.csie.ntu.edu.tw
-  User b09901171
-
-Host meow*
-  HostName %h.csie.ntu.edu.tw
-  User b09901171
-
-Host ws*
-  HostName %h.csie.ntu.edu.tw
-  User b09901171
-
+# Caltech GPS, e.g. `ssh foo.gps` -> foo.gps.caltech.edu
 Host *.gps
   HostName %h.caltech.edu
   User brh
 
-Host xarm
-  User ray
+# ---------------------------------------------------------------------------
+# Defaults
+# ---------------------------------------------------------------------------
+
+# X11 (XQuartz) only to machines we run GUIs on. Trusted mode is needed by
+# OpenGL apps like rviz, but it gives the remote full access to the local X
+# display, so it is not handed to every host (GitHub included).
+Host xarm snoopy glamor_panda_shared glamor_panda_ray ray-desktop hrimfaxi
+  ForwardX11 yes
+  ForwardX11Trusted yes
+
+# No ForwardAgent: remote hosts carry their own GitHub keys, and a forwarded
+# agent lets anyone with root there use ours. Enable per host if ever needed.
+Host *
   ServerAliveInterval 15
   ServerAliveCountMax 4
-  TCPKeepAlive yes
-Match Host xarm exec "nc -z -w 1 10.137.31.180 22 2>/dev/null"
-    HostName 10.137.31.180
-Match Host xarm exec "nc -z -w 1 100.119.115.83 22 2>/dev/null"
-    HostName 100.119.115.83
-
-Host snoopy
-  User borueihu
-# Match Host snoopy exec "nc -z -w 1 100.71.153.128 22 2>/dev/null"
-#     HostName 100.71.153.128
-# Match Host snoopy exec "nc -z -w 1 10.136.20.183 22 2>/dev/null"
-Host snoopy
-    HostName 10.136.20.183
-    ProxyJump xarm
-
-Host ray-desktop
-    User ray
-    Compression yes
-
-Match Host ray-desktop exec "nc -z -w 1 100.122.59.69 22 2>/dev/null"
-    HostName 100.122.59.69
-
-Host ray-desktop
-    HostName 192.168.12.204
-
-Host hrimfaxi
-    User ray
-    HostName 100.67.150.118
-
-Host glamor_panda_shared
-  User franka_glamor
-Match Host glamor_panda_shared exec "nc -z -w 1 100.78.42.34 22 2>/dev/null"
-    HostName 100.78.42.34
-Match Host glamor_panda_shared exec "nc -z -w 1 10.23.74.233 22 2>/dev/null"
-    HostName 10.23.74.233
-
-Host glamor_panda_ray
-  User ray
-Match Host glamor_panda_ray exec "nc -z -w 1 100.78.42.34 22 2>/dev/null"
-    HostName 100.78.42.34
-Match Host glamor_panda_ray exec "nc -z -w 1 10.23.74.233 22 2>/dev/null"
-    HostName 10.23.74.233
