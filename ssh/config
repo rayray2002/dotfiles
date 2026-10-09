@@ -65,27 +65,6 @@ Host ws* meow*
   HostName %h.csie.ntu.edu.tw
   User b09901171
 
-# EE workstations, e.g. `ssh cad16` (password login)
-Host cad*
-  HostName %h.ee.ntu.edu.tw
-  User b09171
-
-# Lab machines behind one port-forwarding gateway, reached from inside NTU
-Host lab_dennis lab_kn lab_a6000 lab_yck lab_4090
-  HostName 140.112.194.91
-  User ray
-  ProxyJump ws2
-Host lab_dennis
-  Port 1008
-Host lab_kn
-  Port 1012
-Host lab_a6000
-  Port 1013
-Host lab_yck
-  Port 1014
-Host lab_4090
-  Port 1015
-
 # ---------------------------------------------------------------------------
 # Caltech
 # ---------------------------------------------------------------------------
@@ -94,30 +73,6 @@ Host lab_4090
 Host hrimfaxi
   User ray
   HostName 100.67.150.118
-
-# GPS machines, e.g. `ssh malala.gps` -> malala.gps.caltech.edu. Port 22 is
-# closed off campus, so hop through hrimfaxi.
-Host *.gps
-  HostName %h.caltech.edu
-  User brh
-  ProxyJump hrimfaxi
-
-# ---------------------------------------------------------------------------
-# Retired (checked 2026-10-08)
-# ---------------------------------------------------------------------------
-
-# NTU CSIE linux1-15 / oasis1-3: gone from DNS, inside NTU too
-# Host linux* oasis*
-#   HostName %h.csie.ntu.edu.tw
-#   User b09901171
-
-# NTU makerspace: port 22 closed from the Mac and from ws2
-# Host mks
-#   HostName 140.112.174.222
-#   User B09901186
-# Host mks_sudo
-#   HostName 140.112.174.222
-#   User makerspace
 
 # ---------------------------------------------------------------------------
 # Defaults
