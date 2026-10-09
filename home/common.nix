@@ -1,4 +1,4 @@
-{ ... }:
+{ host, ... }:
 {
   imports = [
     ../modules/tools.nix
@@ -7,9 +7,10 @@
     ../modules/git.nix
     ../modules/python.nix
     ../modules/tmux.nix
+    ../modules/dots-sync.nix
   ];
 
-  home.username = "ray";
+  home.username = host.user;
   home.stateVersion = "25.05";
 
   # home-manager (master) currently reports a newer release than nixos-unstable;

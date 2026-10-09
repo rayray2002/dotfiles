@@ -108,19 +108,6 @@
         whichgpu() { echo "$CUDA_VISIBLE_DEVICES"; }
         loop() { while true; do eval "$1"; sleep "$2"; clear; done; }
 
-        # Bump the claude-code flake input and rebuild home-manager. Manual
-        # counterpart to the Linux systemd timer (modules/claude-auto-update.nix),
-        # and the only update path on macOS. Subshell keeps the cd local.
-        claude-update() {
-          local target
-          case "$(uname -s)" in
-            Darwin) target="ray@mac" ;;
-            Linux)  target="ray@linux" ;;
-            *) echo "claude-update: unsupported OS: $(uname -s)"; return 1 ;;
-          esac
-          ( cd ~/dotfiles && nix flake update claude-code && home-manager switch --flake ".#$target" )
-        }
-
         # local, machine-specific overrides
         [[ -f ~/.env.zsh ]] && source ~/.env.zsh
       '')

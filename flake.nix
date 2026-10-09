@@ -23,7 +23,9 @@
 
   outputs = inputs@{ nixpkgs, home-manager, ... }:
     let
-      mkHome = system: module:
+      lib = nixpkgs.lib;
+      hosts = import ./hosts.nix;
+      mkHome = name: { system, user }:
         home-manager.lib.homeManagerConfiguration {
           pkgs = import nixpkgs {
             inherit system;
@@ -32,13 +34,16 @@
             config.allowUnfreePredicate = pkg:
               builtins.elem (nixpkgs.lib.getName pkg) [ "zsh-abbr" ];
           };
-          extraSpecialArgs = { inherit inputs; };
-          modules = [ module ];
+          extraSpecialArgs = { inherit inputs hosts; host = { inherit name system user; }; };
+          modules = [
+            (if lib.hasSuffix "darwin" system then ./home/darwin.nix else ./home/linux.nix)
+          ];
         };
     in {
-      homeConfigurations = {
-        "ray@mac" = mkHome "aarch64-darwin" ./home/darwin.nix;
-        "ray@linux" = mkHome "x86_64-linux" ./home/linux.nix;
-      };
+      # One target per machine in hosts.nix, e.g. ray@mac, borueihu@snoopy.
+      homeConfigurations =
+        lib.mapAttrs' (name: h: lib.nameValuePair "${h.user}@${name}" (mkHome name h)) hosts
+        # Legacy generic target, kept so existing `--flake .#ray@linux` still works.
+        // { "ray@linux" = mkHome "linux" { system = "x86_64-linux"; user = "ray"; }; };
     };
 }

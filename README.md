@@ -13,19 +13,28 @@ Declarative shell environment managed with [home-manager](https://github.com/nix
 2. Clone and activate:
    ```bash
    git clone https://github.com/rayray2002/dotfiles.git ~/dotfiles && cd ~/dotfiles
-   nix run home-manager/master -- switch -b backup --flake '.#ray@mac'   # or .#ray@linux
+   nix run home-manager/master -- switch -b backup --flake '.#ray@mac'   # <user>@<host> from hosts.nix
    ```
    `-b backup` renames any existing `~/.zshrc`, `~/.gitconfig`, etc. to `*.backup`
    instead of failing, so the first activation is non-destructive.
 
 ## Daily use
 
-- Edit a `.nix` file, then apply:
-  ```bash
-  home-manager switch --flake ~/dotfiles#ray@mac     # or ray@linux
-  ```
+Machines are listed in `hosts.nix` (ssh alias → system, user); each gets a flake
+target `<user>@<alias>`. To add a machine, add it there and to `ssh/config`.
+
+- **Edit on any machine, then `dots-sync "message"`.** It commits tracked changes,
+  switches locally first (a broken config is never pushed), pushes, and runs
+  `dots-pull` on every other host over ssh in parallel (✓/✗ per host, logs in
+  `~/.local/state/dots-sync/`). Untracked files are listed but not added.
+- **Every host also runs `dots-pull` hourly** (systemd timer / launchd agent), so
+  machines that were off catch up on their own. It fast-forwards `main` from GitHub
+  and switches only when there is a new commit. It refuses to touch a dirty tree or
+  another branch; the reason is printed in your next shell.
+- `flake.lock` is bumped in one place only: the daily `update-claude-code` GitHub
+  Action, or `claude-update` / `nix flake update` followed by `dots-sync`. Never leave
+  lock changes uncommitted on a host — they block its auto-sync.
 - Roll back the last change: `home-manager switch --rollback`
-- Update pinned versions: `nix flake update` then switch again.
 
 ## Python
 
@@ -52,7 +61,8 @@ them from spec. The legacy mac root (`~/miniforge3`) can't be renamed by moving 
 
 | Path | Purpose |
 |------|---------|
-| `flake.nix` | inputs + `ray@mac` / `ray@linux` home configurations |
+| `flake.nix` | inputs + one home configuration per host |
+| `hosts.nix` | the machines: ssh alias → system + user |
 | `home/common.nix` | shared config; imports all modules |
 | `home/{darwin,linux}.nix` | per-platform home directory, mamba root, extras |
 | `modules/zsh.nix` | zsh: aliases, plugins, history, helpers, PATH ordering |
@@ -61,6 +71,8 @@ them from spec. The legacy mac root (`~/miniforge3`) can't be renamed by moving 
 | `modules/git.nix` | git config + delta |
 | `modules/python.nix` | uv + micromamba (root prefix set per-host) |
 | `modules/tmux.nix` | tmux + oh-my-tmux + ssh config symlinks |
+| `modules/dots-sync.nix` | `dots-sync` / `dots-pull` / `claude-update`, hourly pull timer |
+| `.github/workflows/update-claude-code.yml` | daily claude-code lock bump |
 
 ## Scope
 
