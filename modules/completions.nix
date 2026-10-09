@@ -27,7 +27,15 @@ let
     d=$out/share/zsh/site-functions
     mkdir -p $d
     cp ${../zsh/completions}/_* $d/
-    cp ${inputs.conda-zsh-completion}/_conda $d/
+    # conda-zsh-completion finds envs via $CONDA_EXE, which only conda's own
+    # hook sets: use $MAMBA_ROOT_PREFIX (micromamba) first. And list them with
+    # the real ls, not an `ls` alias (eza --icons here).
+    cp ${inputs.conda-zsh-completion}/_conda $d/_conda
+    chmod u+w $d/_conda
+    substituteInPlace $d/_conda \
+      --replace-fail 'conda_path="''${''${CONDA_EXE}%bin/conda}/envs"' \
+                     'conda_path="''${MAMBA_ROOT_PREFIX:-''${CONDA_EXE%bin/conda}}/envs"' \
+      --replace-fail '&& ls $ls_opts' '&& command ls $ls_opts'
     ${lib.optionalString ((host.slurm or null) != null) "cp ${slurmCompletion} $d/_slurm"}
   '';
 
