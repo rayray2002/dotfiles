@@ -36,6 +36,23 @@ target `<user>@<alias>`. To add a machine, add it there and to `ssh/config`.
   lock changes uncommitted on a host — they block its auto-sync.
 - Roll back the last change: `home-manager switch --rollback`
 
+## SSH routes
+
+Hosts reachable several ways are listed once in `ssh/routes.nix`, in order of
+preference: **LAN → Tailscale → school / jump host**. ssh uses the first route
+whose port 22 answers; the last route is the unprobed fallback. A LAN address is
+skipped instantly when no local interface is on that network, so being away from
+home or the lab costs nothing; other probes cost ≤1 s only when that route is down.
+`ssh -G <host> | grep hostname` shows the route picked.
+
+- Extra names for one machine: `aliases` (e.g. `salep` = `xarm`).
+- Every route of a machine shares one `HostKeyAlias`, so switching networks never
+  re-prompts, and a stranger answering on the same private IP elsewhere fails the
+  host-key check instead of getting your login.
+- After adding a host, run `ssh-seed-known-hosts` once per machine to copy keys
+  already trusted by IP to the alias (idempotent).
+- `User`, X11 and other per-host options stay in `ssh/config`.
+
 ## Python
 
 `micromamba` (aliased `mamba`) manages environments (conda-forge + system deps like CUDA);
@@ -70,7 +87,8 @@ them from spec. The legacy mac root (`~/miniforge3`) can't be renamed by moving 
 | `modules/tools.nix` | fzf, zoxide, direnv, atuin, lazygit, yazi, claude-code + CLI packages |
 | `modules/git.nix` | git config + delta |
 | `modules/python.nix` | uv + micromamba (root prefix set per-host) |
-| `modules/tmux.nix` | tmux + oh-my-tmux + ssh config symlinks |
+| `modules/tmux.nix` | tmux + oh-my-tmux |
+| `modules/ssh.nix`, `ssh/routes.nix` | ssh config symlink, generated multi-route blocks, `ssh-probe`, `ssh-seed-known-hosts` |
 | `modules/dots-sync.nix` | `dots-sync` / `dots-pull` / `claude-update`, hourly pull timer |
 | `.github/workflows/update-claude-code.yml` | daily claude-code lock bump |
 

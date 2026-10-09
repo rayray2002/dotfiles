@@ -7,6 +7,7 @@
     ../modules/git.nix
     ../modules/python.nix
     ../modules/tmux.nix
+    ../modules/ssh.nix
     ../modules/dots-sync.nix
   ];
 

@@ -78,7 +78,7 @@ in
       for h in ''${(k)targets}; do
         [[ $h == ${host.name} ]] && continue
         # Hosts still on a pre-dots-sync config have no dots-pull yet.
-        ( ssh -o ConnectTimeout=5 -o BatchMode=yes $h \
+        ( ssh -o ConnectTimeout=5 -o BatchMode=yes -o StrictHostKeyChecking=accept-new $h \
             "export PATH=\$HOME/.nix-profile/bin:/nix/var/nix/profiles/default/bin:\$PATH
              if command -v dots-pull >/dev/null; then dots-pull
              else cd ~/dotfiles && git pull --ff-only && home-manager switch --flake ~/dotfiles#''${targets[$h]}; fi" \
