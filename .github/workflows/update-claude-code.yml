@@ -21,7 +21,10 @@ jobs:
       - name: Bump claude-code
         run: nix flake update claude-code
       - name: Make sure every host still evaluates
-        run: nix eval --raw .#homeConfigurations --apply 'cs: builtins.concatStringsSep "\n" (map (n: n + " " + cs.${n}.activationPackage.drvPath) (builtins.attrNames cs))'
+        run: |
+          # shellcheck disable=SC2016  # a Nix expression, not shell
+          nix eval --raw .#homeConfigurations --apply \
+            'cs: builtins.concatStringsSep "\n" (map (n: n + " " + cs.${n}.activationPackage.drvPath) (builtins.attrNames cs))'
       - name: Commit and push
         run: |
           git diff --quiet flake.lock && { echo "claude-code already current"; exit 0; }
