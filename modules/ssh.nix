@@ -66,6 +66,18 @@ in
 {
   # ssh client config + pinned host keys (NOT private keys). authorized_keys is
   # pushed to servers by ssh/sync-authorized-keys instead of installed here.
+  # Sockets for connection reuse (ControlPath in ssh/config).
+  home.activation.sshControlDir = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    run mkdir -p -m 700 ${config.home.homeDirectory}/.ssh/cm
+  '';
+  # Close every reused connection, e.g. after switching networks if one hangs.
+  programs.zsh.initContent = ''
+    ssh-drop() {
+      local s
+      for s in ~/.ssh/cm/*(N=); do ssh -o ControlPath=$s -O exit _ 2>/dev/null && print "closed ''${s:t}"; done
+    }
+  '';
+
   home.file.".ssh/config".source = ../ssh/config;
   home.file.".ssh/known_hosts.d/dotfiles".source = ../ssh/known_hosts;
   home.file.".ssh/routes.conf".text =

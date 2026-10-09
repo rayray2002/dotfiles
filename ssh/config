@@ -87,3 +87,10 @@ Host *
   IgnoreUnknown UseKeychain
   UseKeychain yes
   AddKeysToAgent yes
+  # Reuse one connection per host for 10 min after the last session closes:
+  # repeated ssh/scp/git/dots-sync skip the handshake (two of them through a
+  # jump host). %C hashes the resolved address, so a new route after a network
+  # change gets a fresh connection. `ssh-drop` closes them all.
+  ControlMaster auto
+  ControlPath ~/.ssh/cm/%C
+  ControlPersist 10m

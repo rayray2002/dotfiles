@@ -195,6 +195,10 @@ Only public material lives here; private keys never leave the machine that made 
   address is skipped instantly when no local interface is on that network, so being away
   costs nothing; other probes cost ≤1 s only when that route is down. `aliases` gives
   one machine several names (`salep` = `xarm`); the attribute name is its `HostKeyAlias`.
+- **Connection reuse**: one connection per host is kept for 10 minutes after the last
+  session (`ControlMaster`, sockets in `~/.ssh/cm`), so repeated ssh/scp/git/`dots-sync`
+  skip the handshake (~0.4 s → ~0.1 s). After a network change ssh opens a fresh
+  connection on the new route; `ssh-drop` closes all of them if one ever hangs.
 - **Pinned host keys** (`ssh/known_hosts` → `~/.ssh/known_hosts.d/dotfiles`): read
   alongside the normal `~/.ssh/known_hosts`, so a new machine trusts our hosts with no
   prompt. Multi-route hosts get `HostKeyAlias` from `ssh/routes.nix`, so every route
