@@ -3,5 +3,5 @@
 # 30 most recent finished ones (array elements included), with name and state.
 local -a jobs
 jobs=( ${(f)"$(squeue -h -u $USER --sort=-V -o '%i:%j (%T, %M)' 2>/dev/null)"}
-       ${(f)"$(sacct -u $USER -S now-7days -X -n -P -o JobID,JobName,State -s CD,F,CA,TO,OOM,NF,PR 2>/dev/null | tail -30 | tac 2>/dev/null | awk -F'|' '{print $1 ":" $2 " (" $3 ")"}')"} )
+       ${(f)"$(sacct -u $USER -S now-7days -X -n -P -o JobID,JobName,State 2>/dev/null | tail -30 | tac 2>/dev/null | awk -F'|' '{print $1 ":" $2 " (" $3 ")"}')"} )
 (( CURRENT == 2 )) && _describe -t jobs 'job' jobs
