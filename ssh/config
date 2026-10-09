@@ -5,6 +5,9 @@
 #   * a `Match ... exec` probe goes before the `Host` block that is its fallback
 #   * `Host *` defaults go last, so any host above can override them
 #
+# Host keys of our own machines are pinned in ssh/known_hosts; multi-route
+# hosts set HostKeyAlias so every route checks the same pinned entry.
+#
 # Multi-route hosts probe an address with `nc -z -w 1` (costs up to 1 s when it
 # is down) and use it if port 22 answers; otherwise the fallback block applies.
 # `Match host` compares against the HostName chosen so far, so once one probe
@@ -18,6 +21,7 @@
 # campus, else tailnet
 Host xarm salep
   User ray
+  HostKeyAlias xarm
 Match host xarm,salep exec "nc -z -w 1 10.137.31.180 22 2>/dev/null"
   HostName 10.137.31.180
 Host xarm salep
@@ -27,6 +31,7 @@ Host xarm salep
 # systemd --user); if that is down, LAN address via xarm
 Host snoopy
   User borueihu
+  HostKeyAlias snoopy
 Match host snoopy exec "nc -z -w 1 100.71.153.128 22 2>/dev/null"
   HostName 100.71.153.128
   ProxyJump none
@@ -43,6 +48,7 @@ Match host glamor_panda_shared,glamor_panda_ray exec "nc -z -w 1 100.78.42.34 22
   HostName 100.78.42.34
 Host glamor_panda_shared glamor_panda_ray
   HostName 10.23.74.233
+  HostKeyAlias glamor-citrine
 
 # ---------------------------------------------------------------------------
 # Personal
@@ -52,6 +58,7 @@ Host glamor_panda_shared glamor_panda_ray
 Host ray-desktop
   User ray
   Compression yes
+  HostKeyAlias ray-desktop
 Match host ray-desktop exec "nc -z -w 1 100.122.59.69 22 2>/dev/null"
   HostName 100.122.59.69
 Host ray-desktop
@@ -74,6 +81,7 @@ Host ws* meow*
 Host hrimfaxi
   User ray
   HostName 100.67.150.118
+  HostKeyAlias hrimfaxi
 
 # ---------------------------------------------------------------------------
 # Defaults
@@ -91,3 +99,10 @@ Host xarm salep snoopy glamor_panda_shared glamor_panda_ray ray-desktop hrimfaxi
 Host *
   ServerAliveInterval 15
   ServerAliveCountMax 4
+  # pinned keys (read-only, from dotfiles) + local file that ssh appends to
+  UserKnownHostsFile ~/.ssh/known_hosts ~/.ssh/known_hosts.d/dotfiles
+  # unlock a passphrase-protected key once and keep it in the agent; the
+  # passphrase lives in the macOS Keychain (Linux ssh ignores UseKeychain)
+  IgnoreUnknown UseKeychain
+  UseKeychain yes
+  AddKeysToAgent yes
