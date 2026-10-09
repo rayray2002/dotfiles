@@ -136,6 +136,15 @@ zoxide, direnv, micromamba) are generated at build time instead of running on ev
 shell, and `compinit` only does its full check once a day or after a switch (which
 deletes `~/.zcompdump`). Measure with `time zsh -i -c exit`.
 
+## tmux
+
+oh-my-tmux plus `tmux/.tmux.conf.local`. `ta` attaches, or starts a session if there is
+none. Sessions are saved every 15 minutes and restored when tmux starts
+(tmux-resurrect + tmux-continuum, provided by Nix; `prefix C-s` / `prefix C-r` save and
+restore by hand). Copying in tmux reaches your local clipboard even over ssh (OSC 52; in
+iTerm2 this needs *Applications in terminal may access clipboard*, which is on). After a
+config change, `prefix r` reloads a running tmux.
+
 ## Python
 
 `micromamba` (aliased `mamba`) manages environments (conda-forge + system deps like CUDA);

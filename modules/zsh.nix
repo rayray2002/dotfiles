@@ -18,7 +18,7 @@ let
     lla = "eza --icons -lga";
     tree = "eza --icons -T -a -I .git";
     cat = "bat --paging=never";   # highlight like cat; `bat` itself still pages
-    ta = "tmux a";
+    ta = "tmux attach || tmux new-session";   # attach, or start one
     tl = "tmux ls";
     c = "claude --dangerously-skip-permissions";
     # `mamba` is defined in modules/python.nix *after* the micromamba shell hook,
@@ -107,6 +107,23 @@ in
     ];
 
     initContent = lib.mkMerge [
+      # Linux: this config loads compiled modules (fzf-tab) linked against
+      # Nix's glibc, so it must run in home-manager's zsh. An interactive zsh
+      # that isn't it (Ubuntu's /usr/bin/zsh, an old static zsh on PATH, or
+      # tmux starting $SHELL) swaps itself for it before loading anything.
+      # _HM_ZSH_SWAPPED stops a loop if the paths ever fail to match.
+      (lib.mkOrder 100 (lib.optionalString pkgs.stdenv.isLinux ''
+        if [[ -o interactive && -z $_HM_ZSH_SWAPPED && -r /proc/$$/exe ]]; then
+          () {
+            local self=/proc/$$/exe ours=${config.home.profileDirectory}/bin/zsh
+            if [[ -x $ours && ''${self:A} != ''${ours:A} ]]; then
+              export _HM_ZSH_SWAPPED=1 SHELL=$ours
+              [[ -o login ]] && exec $ours -l
+              exec $ours
+            fi
+          }
+        fi
+      ''))
       (lib.mkOrder 500 ''
         setopt interactivecomments
 
