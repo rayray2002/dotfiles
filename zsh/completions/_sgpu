@@ -3,7 +3,7 @@
 local -a gpus times parts
 gpus=('1:one GPU (phd)' '2:two GPUs (partition-1)' '3:three GPUs (partition-1, the per-user cap)')
 # colons inside a value are escaped: _describe splits value:description on ':'
-times=('1\\:00\\:00:one hour' '4\\:00\\:00:four hours (default)' '8\\:00\\:00:eight hours' '1-00\\:00\\:00:one day')
+times=('1\:00\:00:one hour' '4\:00\:00:four hours (default)' '8\:00\:00:eight hours' '1-00\:00\:00:one day')
 parts=( ${(f)"$(sinfo -h -o '%R' 2>/dev/null | sort -u)"} )
 if (( ${words[(I)--]} && CURRENT > ${words[(I)--]} )); then
   _normal; return   # srun flags after --: hand over to srun's completion
