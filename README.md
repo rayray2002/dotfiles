@@ -48,6 +48,35 @@ Environment *contents* are never stored in the repo — on a new machine you rec
 them from spec. The legacy mac root (`~/miniforge3`) can't be renamed by moving it
 (env shebangs hardcode the prefix); it would have to be recreated.
 
+## SSH
+
+Only public material lives here; private keys never leave the machine that made them
+(one ed25519 key per device).
+
+- **Client config** (`ssh/config` → `~/.ssh/config`): hosts grouped by site. Machines
+  with several routes probe the LAN or tailnet address with `nc` and fall back to the
+  next route, e.g. `snoopy` goes direct over Tailscale, else via `xarm`. ssh keeps the
+  first value it sees, so probes go before their fallback and `Host *` goes last.
+- **Pinned host keys** (`ssh/known_hosts` → `~/.ssh/known_hosts.d/dotfiles`): read
+  alongside the normal `~/.ssh/known_hosts`, so a new machine trusts our hosts with no
+  prompt. Multi-route hosts set `HostKeyAlias`, so every route checks one entry. After a
+  host is reinstalled, verify its new key out of band, replace its lines, and switch.
+- **Login keys** (`ssh/authorized_keys`): the client keys allowed into every host in
+  `ssh/managed-hosts`. Server keys (the ones snoopy, salep, … use for git) are kept out
+  on purpose, so one shared server can't reach the rest. Push the list with:
+  ```bash
+  ssh/sync-authorized-keys                  # dry run: show the diff per host
+  ssh/sync-authorized-keys --apply          # write it (or name hosts to limit)
+  ssh/sync-authorized-keys --apply --prune  # also drop keys outside the block
+  ```
+  Only a `# BEGIN dotfiles … # END dotfiles` block in each remote file is managed;
+  other lines are kept and reported. Each write backs up the file, checks that a
+  fresh login still works, and restores the backup if it doesn't.
+- **New device**: `ssh-keygen -t ed25519`, add the `.pub` to `ssh/authorized_keys`,
+  run the sync from a machine that can already log in, and commit. On a Mac, set a
+  passphrase and `ssh-add --apple-use-keychain ~/.ssh/id_ed25519`; the config keeps it
+  unlocked through the Keychain.
+
 ## Layout
 
 | Path | Purpose |
@@ -60,7 +89,11 @@ them from spec. The legacy mac root (`~/miniforge3`) can't be renamed by moving 
 | `modules/tools.nix` | fzf, zoxide, direnv, atuin, lazygit, yazi, claude-code + CLI packages |
 | `modules/git.nix` | git config + delta |
 | `modules/python.nix` | uv + micromamba (root prefix set per-host) |
-| `modules/tmux.nix` | tmux + oh-my-tmux + ssh config symlinks |
+| `modules/tmux.nix` | tmux + oh-my-tmux; links `~/.ssh/config` and the pinned host keys |
+| `ssh/config` | ssh client config (hosts, routes, defaults) |
+| `ssh/known_hosts` | pinned host keys for our machines |
+| `ssh/authorized_keys`, `ssh/managed-hosts` | allowed login keys and the hosts that get them |
+| `ssh/sync-authorized-keys` | pushes `authorized_keys` to `managed-hosts` (dry run by default) |
 
 ## Scope
 
