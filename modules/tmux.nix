@@ -1,4 +1,4 @@
-{ inputs, lib, pkgs, ... }:
+{ config, inputs, lib, pkgs, ... }:
 let
   # Loaded in order: continuum finds resurrect through an option resurrect sets.
   plugins = with pkgs.tmuxPlugins; [ resurrect continuum ];
@@ -11,7 +11,9 @@ in
   # appended (see the plugin notes in tmux/.tmux.conf.local)
   home.file.".tmux.conf".source = "${inputs.oh-my-tmux}/.tmux.conf";
   home.file.".tmux.conf.local".text =
-    builtins.replaceStrings [ "@continuumSave@" ] [ continuumSave ]
+    builtins.replaceStrings
+      ([ "@continuumSave@" ] ++ map (n: "@${n}@") (builtins.attrNames config.theme))
+      ([ continuumSave ] ++ builtins.attrValues config.theme)
       (builtins.readFile ../tmux/.tmux.conf.local)
     + "\n# -- plugins (modules/tmux.nix) --\n"
     + lib.concatMapStrings (p: "run-shell ${p.rtp}\n") plugins;

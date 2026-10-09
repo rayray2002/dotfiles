@@ -3,6 +3,7 @@
   imports = [
     ../modules/tools.nix
     ../modules/zsh.nix
+    ../modules/theme.nix
     ../modules/starship.nix
     ../modules/git.nix
     ../modules/python.nix

@@ -1,5 +1,7 @@
-{ lib, ... }:
-
+{ config, lib, ... }:
+let
+  c = config.theme;
+in
 {
   programs.starship = {
     enable = true;
@@ -9,30 +11,30 @@
       "$schema" = "https://starship.rs/config-schema.json";
 
       format = lib.concatStrings [
-        "[](fg:#a3aed2)"
+        "[](fg:${c.lavender})"
         "$os"
-        "[](bg:#769ff0 fg:#a3aed2)"
+        "[](bg:${c.blue} fg:${c.lavender})"
         "$directory"
-        "[](fg:#769ff0 bg:#394260)"
+        "[](fg:${c.blue} bg:${c.slate})"
         "$git_branch"
         "$git_status"
-        "[](fg:#394260 bg:#212736)"
+        "[](fg:${c.slate} bg:${c.navy})"
         "$nodejs"
         "$conda"
         "$bun"
         "$rust"
         "$golang"
         "$php"
-        "[](fg:#212736 bg:#1d2230)"
+        "[](fg:${c.navy} bg:${c.night})"
         "$time"
-        "[ ](fg:#1d2230)"
+        "[ ](fg:${c.night})"
         "$line_break"
         "$character"
       ];
 
       os = {
         disabled = false;
-        style = "bg:#a3aed2 fg:#090c0c";
+        style = "bg:${c.lavender} fg:${c.ink}";
         format = "[ $symbol ]($style)";
 
         symbols = {
@@ -49,7 +51,7 @@
       };
 
       directory = {
-        style = "fg:#e3e5e5 bg:#769ff0";
+        style = "fg:${c.text} bg:${c.blue}";
         format = "[ $path ]($style)";
         truncation_length = 3;
         truncation_symbol = "…/";
@@ -64,56 +66,56 @@
 
       git_branch = {
         symbol = "";
-        style = "bg:#394260";
-        format = "[[ $symbol $branch ](fg:#769ff0 bg:#394260)]($style)";
+        style = "bg:${c.slate}";
+        format = "[[ $symbol $branch ](fg:${c.blue} bg:${c.slate})]($style)";
       };
 
       git_status = {
-        style = "bg:#394260";
-        format = "[[($all_status$ahead_behind )](fg:#769ff0 bg:#394260)]($style)";
+        style = "bg:${c.slate}";
+        format = "[[($all_status$ahead_behind )](fg:${c.blue} bg:${c.slate})]($style)";
       };
 
       nodejs = {
         symbol = "";
-        style = "bg:#212736";
-        format = "[[ $symbol ($version) ](fg:#769ff0 bg:#212736)]($style)";
+        style = "bg:${c.navy}";
+        format = "[[ $symbol ($version) ](fg:${c.blue} bg:${c.navy})]($style)";
       };
 
       conda = {
         symbol = "";
-        style = "bg:#212736";
-        format = "[[ $symbol ($environment) ](fg:#769ff0 bg:#212736)]($style)";
+        style = "bg:${c.navy}";
+        format = "[[ $symbol ($environment) ](fg:${c.blue} bg:${c.navy})]($style)";
       };
 
       bun = {
         symbol = "";
-        style = "bg:#212736";
-        format = "[[ $symbol ($version) ](fg:#769ff0 bg:#212736)]($style)";
+        style = "bg:${c.navy}";
+        format = "[[ $symbol ($version) ](fg:${c.blue} bg:${c.navy})]($style)";
       };
 
       rust = {
         symbol = "";
-        style = "bg:#212736";
-        format = "[[ $symbol ($version) ](fg:#769ff0 bg:#212736)]($style)";
+        style = "bg:${c.navy}";
+        format = "[[ $symbol ($version) ](fg:${c.blue} bg:${c.navy})]($style)";
       };
 
       golang = {
         symbol = "";
-        style = "bg:#212736";
-        format = "[[ $symbol ($version) ](fg:#769ff0 bg:#212736)]($style)";
+        style = "bg:${c.navy}";
+        format = "[[ $symbol ($version) ](fg:${c.blue} bg:${c.navy})]($style)";
       };
 
       php = {
         symbol = "";
-        style = "bg:#212736";
-        format = "[[ $symbol ($version) ](fg:#769ff0 bg:#212736)]($style)";
+        style = "bg:${c.navy}";
+        format = "[[ $symbol ($version) ](fg:${c.blue} bg:${c.navy})]($style)";
       };
 
       time = {
         disabled = false;
         time_format = "%R";
-        style = "bg:#1d2230";
-        format = "[[  $time ](fg:#a0a9cb bg:#1d2230)]($style)";
+        style = "bg:${c.night}";
+        format = "[[  $time ](fg:${c.dim} bg:${c.night})]($style)";
       };
 
       java = {
