@@ -100,7 +100,8 @@ in
     run mkdir -p ${stateDir}
   '';
 
-  systemd.user = lib.mkIf pkgs.stdenv.isLinux {
+  # Without root these units are written as real files by modules/no-root.nix.
+  systemd.user = lib.mkIf (pkgs.stdenv.isLinux && host.noRoot == null) {
     services.dots-sync = {
       Unit.Description = "Pull ~/dotfiles from GitHub and apply it with home-manager";
       Service = {

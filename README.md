@@ -18,8 +18,44 @@ Declarative shell environment managed with [home-manager](https://github.com/nix
    ```
    `-b backup` renames any existing `~/.zshrc`, `~/.gitconfig`, etc. to `*.backup`
    instead of failing, so the first activation is non-destructive.
-3. Linux only: `loginctl enable-linger $USER` (may need sudo) so the hourly sync timer
+3. Linux only: `loginctl enable-linger $USER` (may need sudo; already on for snoopy) so the hourly sync timer
    also runs while you're logged out.
+
+### Without root (e.g. snoopy)
+
+The steps above need root once, to create `/nix`. Without it, Nix runs in a user
+namespace: [nix-user-chroot](https://github.com/nix-community/nix-user-chroot) mounts a
+directory you own at `/nix`, and every zsh you start (ssh login, `ssh host cmd`, scripts)
+re-enters that namespace by itself. Requirements: Linux with unprivileged user namespaces
+(`unshare --user --map-root-user true` succeeds) and a few GB of disk for the store.
+
+1. In `hosts.nix`, give the machine a store directory on a disk with room, e.g.
+   `noRoot.store = "/scr/borueihu/nix";` (snoopy's `/home` has a ~15 GB quota), and
+   `dots-sync` that from another machine.
+2. On the machine itself:
+   ```bash
+   git clone https://github.com/rayray2002/dotfiles.git ~/dotfiles   # must be on main
+   ~/dotfiles/scripts/bootstrap-no-root borueihu@snoopy
+   ```
+   On snoopy, `~/dotfiles` is still the old pre-Nix checkout on `master`, with local
+   files: move it aside first (`mv ~/dotfiles ~/dotfiles.pre-nix`).
+   The script downloads the static `nix-user-chroot` to `~/.local/bin`, installs single-user Nix
+   into the store directory, and runs the first `home-manager switch -b backup`. It is
+   safe to re-run.
+3. Open a new ssh session: the prompt is this config. `echo $ZDOTDIR` shows
+   `~/.config/zsh` inside the namespace.
+
+How it differs from a normal host (`modules/no-root.nix`):
+- `~/.zshenv` and the `dots-sync` / weekly `dots-gc` systemd user units are real files,
+  not links into `/nix/store`, because they are read from outside the namespace where
+  `/nix` does not exist. zsh's other files live in `~/.config/zsh`.
+- Things that start outside a shell don't see Nix tools: Slurm jobs, cron, system
+  services. Use absolute system paths there, or wrap the command:
+  `~/.local/bin/nix-user-chroot <store> <command>`.
+- Escape hatch: `touch ~/.no-nix` and new shells are plain system zsh with no dotfiles.
+  The same happens on its own if the store directory disappears (e.g. scratch wiped);
+  re-run the bootstrap to restore it.
+- `sudo` and other setuid programs can't gain privileges inside the namespace.
 
 ## Daily use
 
@@ -57,14 +93,17 @@ discard them, and it resumes on the next run.
 
 ### Adding a machine
 
-1. `hosts.nix`: add `<ssh alias> = { system = ...; user = ...; };`.
+1. `hosts.nix`: add `<ssh alias> = { system = ...; user = ...; };` (plus
+   `noRoot.store = ...;` if you have no root there, see
+   [Without root](#without-root-eg-snoopy)).
 2. `ssh/config`: a `Host <alias>` block with its `User`. If it has more than one
    address, list them in `ssh/routes.nix` (LAN, then Tailscale, then school/jump);
    otherwise give it a plain `HostName` here.
 3. `ssh/known_hosts`: pin its key under the alias, checked out of band
    (`ssh-keyscan -t ed25519 <address>`, then replace the address with the alias).
 4. Its own login key: see **New device** under [SSH](#ssh).
-5. `dots-sync "add <alias>"`, then do [First-time setup](#first-time-setup) on it.
+5. `dots-sync "add <alias>"`, then do [First-time setup](#first-time-setup) on it (or
+   `scripts/bootstrap-no-root <user>@<alias>` without root).
 
 ## Shell
 
@@ -161,6 +200,7 @@ Only public material lives here; private keys never leave the machine that made 
 | `ssh/authorized_keys`, `ssh/managed-hosts` | allowed login keys and the hosts that get them |
 | `ssh/sync-authorized-keys` | pushes `authorized_keys` to `managed-hosts` (dry run by default) |
 | `modules/dots-sync.nix` | `dots-sync` / `dots-pull` / `claude-update`, hourly pull timer |
+| `modules/no-root.nix`, `scripts/bootstrap-no-root` | hosts without root: Nix in a user namespace via nix-user-chroot |
 | `.github/workflows/update-claude-code.yml` | daily claude-code lock bump |
 
 ## Scope

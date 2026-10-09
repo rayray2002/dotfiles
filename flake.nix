@@ -25,10 +25,13 @@
     let
       lib = nixpkgs.lib;
       hosts = import ./hosts.nix;
-      mkHome = name: { system, user }:
+      mkHome = name: h@{ system, user, ... }:
         home-manager.lib.homeManagerConfiguration {
           pkgs = import nixpkgs { inherit system; };
-          extraSpecialArgs = { inherit inputs hosts; host = { inherit name system user; }; };
+          extraSpecialArgs = {
+            inherit inputs hosts;
+            host = { noRoot = null; } // h // { inherit name; };
+          };
           modules = [
             (if lib.hasSuffix "darwin" system then ./home/darwin.nix else ./home/linux.nix)
           ];

@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+# Set up Nix + this home-manager config on a Linux machine where you have no
+# root (e.g. snoopy). Nix runs in a user namespace via nix-user-chroot, with
+# <store-dir> mounted at /nix; see modules/no-root.nix for how shells enter it.
+#
+#   scripts/bootstrap-no-root <user@alias>
+#
+# The machine must be in hosts.nix with noRoot.store set, and ~/dotfiles must be
+# a clone of this repo on main. Safe to re-run: finished steps are skipped.
+set -euo pipefail
+
+target=${1:?usage: $0 <user@alias>   (flake target from hosts.nix)}
+flake=$HOME/dotfiles
+version=2.1.1
+nuc=$HOME/.local/bin/nix-user-chroot
+
+say() { printf '\033[1m==> %s\033[0m\n' "$*"; }
+die() { printf 'bootstrap-no-root: %s\n' "$*" >&2; exit 1; }
+
+[[ $(uname -s) == Linux ]] || die "Linux only"
+[[ $(git -C "$flake" branch --show-current 2>/dev/null) == main ]] ||
+  die "$flake must be a clone of the dotfiles repo, on main"
+unshare --user --map-root-user --mount true 2>/dev/null ||
+  die "unprivileged user namespaces are disabled here, so nix-user-chroot can't run"
+
+# noRoot.store for this target, read from hosts.nix without needing Nix yet.
+alias=${target#*@}
+store=$(awk -v a="$alias" '
+  $1 == a { inhost = 1 }
+  inhost && /noRoot\.store/ { match($0, /"[^"]+"/); print substr($0, RSTART + 1, RLENGTH - 2); exit }
+  inhost && /};/ { inhost = 0 }' "$flake/hosts.nix")
+[[ -n $store ]] || die "no noRoot.store for '$alias' in hosts.nix"
+
+say "nix-user-chroot $version -> $nuc"
+if [[ ! -x $nuc ]]; then
+  mkdir -p "$(dirname "$nuc")"
+  curl -fL -o "$nuc.tmp" \
+    "https://github.com/nix-community/nix-user-chroot/releases/download/$version/nix-user-chroot-bin-$version-$(uname -m)-unknown-linux-musl"
+  chmod 755 "$nuc.tmp" && mv "$nuc.tmp" "$nuc"
+fi
+
+say "Nix (single-user) in $store, seen as /nix inside the namespace"
+mkdir -p "$store" && chmod 755 "$store"
+mkdir -p "$HOME/.config/nix"
+grep -qs '^experimental-features' "$HOME/.config/nix/nix.conf" ||
+  echo 'experimental-features = nix-command flakes' >> "$HOME/.config/nix/nix.conf"
+if [[ ! -d $store/store ]]; then
+  "$nuc" "$store" bash -c 'curl -fL https://nixos.org/nix/install | sh -s -- --no-daemon --no-modify-profile'
+fi
+
+say "home-manager switch --flake $flake#$target"
+# shellcheck disable=SC2016  # expanded by the inner bash, inside the namespace
+"$nuc" "$store" bash -c '
+  . "$HOME/.nix-profile/etc/profile.d/nix.sh"
+  nix run home-manager/master -- switch -b backup --flake "$1"' _ "$flake#$target"
+
+say "Done. New ssh sessions and shells enter the namespace on their own."
+echo "    Escape hatch: touch ~/.no-nix  (plain system zsh, no dotfiles)"

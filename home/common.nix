@@ -9,6 +9,7 @@
     ../modules/tmux.nix
     ../modules/ssh.nix
     ../modules/dots-sync.nix
+    ../modules/no-root.nix
   ];
 
   home.username = host.user;
