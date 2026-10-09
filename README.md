@@ -23,39 +23,51 @@ Declarative shell environment managed with [home-manager](https://github.com/nix
 
 ### Without root (e.g. snoopy)
 
-The steps above need root once, to create `/nix`. Without it, Nix runs in a user
-namespace: [nix-user-chroot](https://github.com/nix-community/nix-user-chroot) mounts a
-directory you own at `/nix`, and every zsh you start (ssh login, `ssh host cmd`, scripts)
-re-enters that namespace by itself. Requirements: Linux with unprivileged user namespaces
-(`unshare --user --map-root-user true` succeeds) and a few GB of disk for the store.
+The steps above need root once, to create `/nix`. Without it, Nix runs through
+[nix-portable](https://github.com/DavHau/nix-portable) (bwrap): its store lives under a
+directory you own and appears as `/nix` only inside its namespace. home-manager activates
+into a **separate home** (`noRoot.home`), not your real one, so the real `~` (quota, login
+shell, anything else using it) stays untouched. Interactive logins enter the env through a
+hook at the top of the real `~/.zshrc`. Needs unprivileged user namespaces
+(`unshare --user --map-root-user true` succeeds) and a few GB free for the store.
 
-1. In `hosts.nix`, give the machine a store directory on a disk with room, e.g.
-   `noRoot.store = "/scr/borueihu/nix";` (snoopy's `/home` has a ~15 GB quota), and
-   `dots-sync` that from another machine.
-2. On the machine itself:
-   ```bash
-   git clone https://github.com/rayray2002/dotfiles.git ~/dotfiles   # must be on main
-   ~/dotfiles/scripts/bootstrap-no-root borueihu@snoopy
-   ```
-   On snoopy, `~/dotfiles` is still the old pre-Nix checkout on `master`, with local
-   files: move it aside first (`mv ~/dotfiles ~/dotfiles.pre-nix`).
-   The script downloads the static `nix-user-chroot` to `~/.local/bin`, installs single-user Nix
-   into the store directory, and runs the first `home-manager switch -b backup`. It is
-   safe to re-run.
-3. Open a new ssh session: the prompt is this config. `echo $ZDOTDIR` shows
-   `~/.config/zsh` inside the namespace.
+```nix
+# hosts.nix
+snoopy = { system = "x86_64-linux"; user = "borueihu";
+           noRoot = {
+             location = "/scr/borueihu";          # nix-portable store + bin/ wrappers
+             home = "/scr/borueihu/nixhome";      # $HOME inside the env
+             flake = "/scr/borueihu/dotfiles-nix"; # this repo's checkout there
+           }; };
+```
+
+On a new machine, add its entry, `dots-sync` it, then on the machine:
+```bash
+git clone https://github.com/rayray2002/dotfiles.git /tmp/dotfiles
+/tmp/dotfiles/scripts/bootstrap-no-root <user>@<alias>
+```
+It installs nix-portable into `<location>/bin`, clones the repo to `noRoot.flake`, builds
+and activates, and adds the hook to `~/.zshrc` (backup: `.zshrc.pre-dotfiles`). Re-runnable.
+
+In the env:
+
+| Command | Does |
+|---|---|
+| `nixshell` | enter the env (the `~/.zshrc` hook runs it on login) |
+| `hm-switch [flake]` | build and activate this host's config |
+| `dots-pull`, `dots-sync` | as on other hosts; switching goes through `hm-switch` |
+| `nix …` | Nix via nix-portable |
 
 How it differs from a normal host (`modules/no-root.nix`):
-- `~/.zshenv` and the `dots-sync` / weekly `dots-gc` systemd user units are real files,
-  not links into `/nix/store`, because they are read from outside the namespace where
-  `/nix` does not exist. zsh's other files live in `~/.config/zsh`.
-- Things that start outside a shell don't see Nix tools: Slurm jobs, cron, system
-  services. Use absolute system paths there, or wrap the command:
-  `~/.local/bin/nix-user-chroot <store> <command>`.
-- Escape hatch: `touch ~/.no-nix` and new shells are plain system zsh with no dotfiles.
-  The same happens on its own if the store directory disappears (e.g. scratch wiped);
-  re-run the bootstrap to restore it.
-- `sudo` and other setuid programs can't gain privileges inside the namespace.
+- `nixshell`, `hm-switch`, `nix` and `dots-pull` in `<location>/bin` and the
+  `dots-sync` systemd timer in the real `~/.config/systemd/user` are real files written at
+  activation, because they're used from outside the env, where `/nix` doesn't exist.
+- Inside the env `$HOME` is `noRoot.home`; your ssh keys are linked in from the real
+  `~/.ssh`, so git and ssh work as usual.
+- Only interactive logins enter the env. `ssh host cmd`, Slurm jobs, cron and system
+  services run outside it: use `<location>/bin/nix …` or `nixshell` there.
+- Plain shell without the env: `NO_NIXSHELL=1 zsh` (or `ssh host bash`). The hook also
+  skips itself if the store directory is missing, so a wiped `/scr` can't lock you out.
 
 ## Daily use
 
@@ -94,7 +106,7 @@ discard them, and it resumes on the next run.
 ### Adding a machine
 
 1. `hosts.nix`: add `<ssh alias> = { system = ...; user = ...; };` (plus
-   `noRoot.store = ...;` if you have no root there, see
+   `noRoot = { ... };` if you have no root there, see
    [Without root](#without-root-eg-snoopy)).
 2. `ssh/config`: a `Host <alias>` block with its `User`. If it has more than one
    address, list them in `ssh/routes.nix` (LAN, then Tailscale, then school/jump);
@@ -139,6 +151,7 @@ per-host file rather than the shared `modules/python.nix`:
 |------|------|-----|
 | `home/darwin.nix` (the Mac) | `~/miniforge3` | reuses the pre-existing miniforge envs (`base`, `wam`, `telegram`, …) |
 | `home/linux.nix` (Linux hosts) | `~/miniforge3` | matches the existing roots there; a fresh machine could use a clean `~/micromamba` |
+| `home/hosts/snoopy.nix` | `~/micromamba` in `nixhome` | fresh Nix-native root inside the rootless env |
 
 Environment *contents* are never stored in the repo — on a new machine you recreate
 them from spec. The legacy mac root (`~/miniforge3`) can't be renamed by moving it
@@ -200,7 +213,8 @@ Only public material lives here; private keys never leave the machine that made 
 | `ssh/authorized_keys`, `ssh/managed-hosts` | allowed login keys and the hosts that get them |
 | `ssh/sync-authorized-keys` | pushes `authorized_keys` to `managed-hosts` (dry run by default) |
 | `modules/dots-sync.nix` | `dots-sync` / `dots-pull` / `claude-update`, hourly pull timer |
-| `modules/no-root.nix`, `scripts/bootstrap-no-root` | hosts without root: Nix in a user namespace via nix-user-chroot |
+| `modules/no-root.nix`, `scripts/bootstrap-no-root` | hosts without root: nix-portable, separate home, generated wrappers |
+| `home/hosts/<alias>.nix` | optional per-machine settings, imported automatically |
 | `.github/workflows/update-claude-code.yml` | daily claude-code lock bump |
 
 ## Scope

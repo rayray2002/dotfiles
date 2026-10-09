@@ -34,13 +34,15 @@
           };
           modules = [
             (if lib.hasSuffix "darwin" system then ./home/darwin.nix else ./home/linux.nix)
-          ];
+          ] ++ lib.optional (builtins.pathExists ./home/hosts/${name}.nix) ./home/hosts/${name}.nix;
         };
     in {
       # One target per machine in hosts.nix, e.g. ray@mac, borueihu@snoopy.
       homeConfigurations =
         lib.mapAttrs' (name: h: lib.nameValuePair "${h.user}@${name}" (mkHome name h)) hosts
-        # Legacy generic target, kept so existing `--flake .#ray@linux` still works.
-        // { "ray@linux" = mkHome "linux" { system = "x86_64-linux"; user = "ray"; }; };
+        # Legacy names, kept so existing `--flake .#ray@linux` and snoopy's
+        # pre-repo hm-switch (builds borueihu@linux) still work.
+        // { "ray@linux" = mkHome "linux" { system = "x86_64-linux"; user = "ray"; };
+             "borueihu@linux" = mkHome "snoopy" hosts.snoopy; };
     };
 }

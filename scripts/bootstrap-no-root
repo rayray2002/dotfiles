@@ -1,58 +1,82 @@
 #!/usr/bin/env bash
 # Set up Nix + this home-manager config on a Linux machine where you have no
-# root (e.g. snoopy). Nix runs in a user namespace via nix-user-chroot, with
-# <store-dir> mounted at /nix; see modules/no-root.nix for how shells enter it.
+# root, the way snoopy runs (see modules/no-root.nix): nix-portable keeps the
+# store under noRoot.location, home-manager activates into noRoot.home, and the
+# real home is left alone apart from a hook at the top of ~/.zshrc.
 #
 #   scripts/bootstrap-no-root <user@alias>
 #
-# The machine must be in hosts.nix with noRoot.store set, and ~/dotfiles must be
-# a clone of this repo on main. Safe to re-run: finished steps are skipped.
+# The machine must be in hosts.nix with noRoot set. Safe to re-run.
 set -euo pipefail
 
 target=${1:?usage: $0 <user@alias>   (flake target from hosts.nix)}
-flake=$HOME/dotfiles
-version=2.1.1
-nuc=$HOME/.local/bin/nix-user-chroot
+alias=${target#*@}
+repo=$(cd "$(dirname "$0")/.." && pwd)
+np_version=v012
 
 say() { printf '\033[1m==> %s\033[0m\n' "$*"; }
 die() { printf 'bootstrap-no-root: %s\n' "$*" >&2; exit 1; }
 
+# noRoot.<key> for this host, read from hosts.nix without needing Nix yet.
+field() {
+  awk -v a="$alias" -v k="$1" '
+    $1 == a { inhost = 1; next }
+    inhost && /^  [A-Za-z0-9_-]+ +=/ { exit }
+    inhost && $1 == k { match($0, /"[^"]+"/); print substr($0, RSTART + 1, RLENGTH - 2); exit }
+  ' "$repo/hosts.nix"
+}
+
 [[ $(uname -s) == Linux ]] || die "Linux only"
-[[ $(git -C "$flake" branch --show-current 2>/dev/null) == main ]] ||
-  die "$flake must be a clone of the dotfiles repo, on main"
-unshare --user --map-root-user --mount true 2>/dev/null ||
-  die "unprivileged user namespaces are disabled here, so nix-user-chroot can't run"
+unshare --user --map-root-user true 2>/dev/null ||
+  die "unprivileged user namespaces are disabled here, so nix-portable can't run"
+loc=$(field location); home=$(field home); flake=$(field flake)
+[[ -n $loc && -n $home && -n $flake ]] || die "hosts.nix: '$alias' needs noRoot.{location,home,flake}"
+bin=$loc/bin
 
-# noRoot.store for this target, read from hosts.nix without needing Nix yet.
-alias=${target#*@}
-store=$(awk -v a="$alias" '
-  $1 == a { inhost = 1 }
-  inhost && /noRoot\.store/ { match($0, /"[^"]+"/); print substr($0, RSTART + 1, RLENGTH - 2); exit }
-  inhost && /};/ { inhost = 0 }' "$flake/hosts.nix")
-[[ -n $store ]] || die "no noRoot.store for '$alias' in hosts.nix"
-
-say "nix-user-chroot $version -> $nuc"
-if [[ ! -x $nuc ]]; then
-  mkdir -p "$(dirname "$nuc")"
-  curl -fL -o "$nuc.tmp" \
-    "https://github.com/nix-community/nix-user-chroot/releases/download/$version/nix-user-chroot-bin-$version-$(uname -m)-unknown-linux-musl"
-  chmod 755 "$nuc.tmp" && mv "$nuc.tmp" "$nuc"
+say "nix-portable $np_version -> $bin/nix-portable"
+mkdir -p "$bin" "$home"
+if [[ ! -x $bin/nix-portable ]]; then
+  curl -fL -o "$bin/nix-portable.tmp" \
+    "https://github.com/DavHau/nix-portable/releases/download/$np_version/nix-portable-$(uname -m)"
+  chmod 755 "$bin/nix-portable.tmp" && mv "$bin/nix-portable.tmp" "$bin/nix-portable"
 fi
 
-say "Nix (single-user) in $store, seen as /nix inside the namespace"
-mkdir -p "$store" && chmod 755 "$store"
-mkdir -p "$HOME/.config/nix"
-grep -qs '^experimental-features' "$HOME/.config/nix/nix.conf" ||
-  echo 'experimental-features = nix-command flakes' >> "$HOME/.config/nix/nix.conf"
-if [[ ! -d $store/store ]]; then
-  "$nuc" "$store" bash -c 'curl -fL https://nixos.org/nix/install | sh -s -- --no-daemon --no-modify-profile'
+say "dotfiles checkout -> $flake"
+if [[ ! -d $flake/.git ]]; then
+  git clone https://github.com/rayray2002/dotfiles.git "$flake"
+fi
+[[ $(git -C "$flake" branch --show-current) == main ]] || die "$flake must be on main"
+
+# Same steps as the generated hm-switch, which doesn't exist until this first
+# activation writes it.
+say "building and activating $target (first run downloads a few GB)"
+export NP_LOCATION=$loc NP_RUNTIME=bwrap HOME=$home
+gen=$("$bin/nix-portable" nix build "$flake#homeConfigurations.\"$target\".activationPackage" \
+  --no-link --print-out-paths --extra-experimental-features 'nix-command flakes')
+v=$("$bin/nix-portable" nix --version | awk '{print $NF}')
+# shellcheck disable=SC2016  # expanded by the inner bash
+"$bin/nix-portable" nix shell nixpkgs#bash --command bash -c '
+  export PATH="$(echo /nix/store/*-nix-'"$v"'/bin):$PATH"
+  exec bash "$1"
+' hm "$gen/activate"
+
+real_zshrc=$(getent passwd "$(id -un)" | cut -d: -f6)/.zshrc
+if ! grep -qs 'bin/nixshell' "$real_zshrc"; then
+  say "adding the nixshell hook to the top of $real_zshrc (backup: .zshrc.pre-dotfiles)"
+  [[ -e $real_zshrc ]] && cp -p "$real_zshrc" "$real_zshrc.pre-dotfiles"
+  {
+    cat <<EOF
+# Enter the rootless home-manager env (dotfiles: modules/no-root.nix) on
+# interactive logins. Skipped inside it, with NO_NIXSHELL=1, or if the store
+# is missing, so this can't lock you out. Plain shell: NO_NIXSHELL=1 zsh
+if [[ -o interactive && -z \$IN_NIXSHELL && -z \$NO_NIXSHELL \\
+      && -x $bin/nixshell && -d $loc/.nix-portable ]]; then
+  exec $bin/nixshell
 fi
 
-say "home-manager switch --flake $flake#$target"
-# shellcheck disable=SC2016  # expanded by the inner bash, inside the namespace
-"$nuc" "$store" bash -c '
-  . "$HOME/.nix-profile/etc/profile.d/nix.sh"
-  nix run home-manager/master -- switch -b backup --flake "$1"' _ "$flake#$target"
+EOF
+    [[ -e $real_zshrc.pre-dotfiles ]] && cat "$real_zshrc.pre-dotfiles"
+  } > "$real_zshrc"
+fi
 
-say "Done. New ssh sessions and shells enter the namespace on their own."
-echo "    Escape hatch: touch ~/.no-nix  (plain system zsh, no dotfiles)"
+say "Done. Open a new ssh session; it lands in the env (HOME=$home)."

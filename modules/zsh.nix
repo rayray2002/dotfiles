@@ -229,6 +229,6 @@ in
 
   # Fresh completion dump after every switch (see completionInit).
   home.activation.zshCompdump = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-    run rm -f ${config.home.homeDirectory}/.zcompdump* ${config.xdg.configHome}/zsh/.zcompdump*
+    run rm -f ${config.home.homeDirectory}/.zcompdump*
   '';
 }
