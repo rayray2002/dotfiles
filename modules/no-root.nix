@@ -71,7 +71,8 @@ let
         exec bash "$1"
       ' hm "$gen/activate"
     '';
-    dots-pull = config.dots.pullScript;
+    dots-pull = builtins.replaceStrings [ "#!/usr/bin/env bash\n" ] [ "#!/usr/bin/env bash\n# ${marker}.\n" ]
+      config.dots.pullScript;
   };
   scriptDir = pkgs.linkFarm "no-root-bin" (lib.mapAttrsToList (name: text: {
     inherit name;
