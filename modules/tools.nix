@@ -1,29 +1,41 @@
-{ inputs, pkgs, ... }:
+{ config, inputs, lib, pkgs, ... }:
+let
+  # Shell integrations are generated once at build time and sourced, instead
+  # of home-manager's default `eval "$(tool init zsh)"` in every new shell
+  # (together ~150 ms of startup). The output only embeds the tool's own store
+  # path, so it changes exactly when the tool does.
+  initScript = name: cmd: pkgs.runCommand "${name}-init.zsh" { } ''
+    HOME=$TMPDIR ${cmd} > $out
+  '';
+  exe = p: lib.getExe config.programs.${p}.package;
+in
 {
   programs.fzf = {
     enable = true;
-    enableZshIntegration = true;
+    enableZshIntegration = false;   # sourced below
+    # fd: fast, skips .gitignored files, includes dotfiles
+    defaultCommand = "fd --type f --hidden --exclude .git";
+    fileWidgetCommand = "fd --type f --hidden --exclude .git";
+    fileWidgetOptions = [ "--preview 'bat --color=always --style=numbers --line-range=:200 {}'" ];
+    changeDirWidgetCommand = "fd --type d --hidden --exclude .git";
+    changeDirWidgetOptions = [ "--preview 'eza -T -L 2 --color=always --icons {}'" ];
   };
 
   programs.zoxide = {
     enable = true;
-    enableZshIntegration = true;
+    enableZshIntegration = false;   # sourced below
   };
 
   programs.direnv = {
     enable = true;
     nix-direnv.enable = true;
-    enableZshIntegration = true;
+    enableZshIntegration = false;   # sourced below
+    silent = true;                  # no "direnv: export +FOO ..." on every cd
   };
-
-  # programs.zellij = {
-  #   enable = true;
-  #   enableZshIntegration = true;
-  # };
 
   programs.atuin = {
     enable = true;
-    enableZshIntegration = true;
+    enableZshIntegration = false;   # sourced below
     flags = [ "--disable-up-arrow" ];
     settings = {
       enter_accept = true;
@@ -42,6 +54,16 @@
   };
 
   programs.lazygit.enable = true;
+
+  # Order matters: atuin after fzf so Ctrl+R is atuin's; zoxide after compinit.
+  programs.zsh.initContent = lib.mkOrder 900 ''
+    if [[ $options[zle] = on ]]; then
+      source ${initScript "fzf" "${exe "fzf"} --zsh"}
+      source ${initScript "atuin" "${exe "atuin"} init zsh ${lib.escapeShellArgs config.programs.atuin.flags}"}
+    fi
+    source ${initScript "zoxide" "${exe "zoxide"} init zsh ${lib.escapeShellArgs config.programs.zoxide.options}"}
+    source ${initScript "direnv" "${exe "direnv"} hook zsh"}
+  '';
 
   home.packages = with pkgs; [
     # core

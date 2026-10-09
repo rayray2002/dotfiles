@@ -36,6 +36,17 @@ target `<user>@<alias>`. To add a machine, add it there and to `ssh/config`.
   lock changes uncommitted on a host — they block its auto-sync.
 - Roll back the last change: `home-manager switch --rollback`
 
+## Shell
+
+Run **`zhelp`** for the keys, shorthands and functions this config adds. Highlights:
+↑/↓ search history by what you've typed, Ctrl+R is atuin, Ctrl+T / Alt+C fuzzy-pick
+files and directories with previews, Tab opens fuzzy completion, and git shorthands
+(`gst`, `gco`, …) expand to the full command when you press space (Ctrl+Space doesn't).
+
+Startup is kept fast (~80 ms): tool init scripts (starship, fzf, atuin, zoxide,
+direnv, micromamba) are generated at build time instead of running on every shell,
+and `compinit` only does its full check once a day or after a switch.
+
 ## SSH routes
 
 Hosts reachable several ways are listed once in `ssh/routes.nix`, in order of

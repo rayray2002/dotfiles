@@ -1,4 +1,13 @@
 { lib, pkgs, ... }:
+let
+  # Generated at build time: running `micromamba shell hook` cost 150-300 ms
+  # per shell. It only embeds the micromamba path; MAMBA_ROOT_PREFIX is read
+  # at runtime.
+  mambaHook = pkgs.runCommand "micromamba-hook.zsh" { } ''
+    HOME=$TMPDIR MAMBA_ROOT_PREFIX=$TMPDIR/mamba \
+      ${pkgs.micromamba}/bin/micromamba shell hook --shell zsh > $out
+  '';
+in
 {
   home.packages = with pkgs; [
     uv
@@ -16,7 +25,7 @@
     # `mamba` alias is defined ("defining function based on alias"). So unalias
     # first, eval the hook, then (re)create the alias.
     unalias mamba 2>/dev/null
-    eval "$(micromamba shell hook --shell zsh)"
+    source ${mambaHook}
     alias mamba=micromamba
   '';
 }

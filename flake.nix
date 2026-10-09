@@ -27,13 +27,7 @@
       hosts = import ./hosts.nix;
       mkHome = name: { system, user }:
         home-manager.lib.homeManagerConfiguration {
-          pkgs = import nixpkgs {
-            inherit system;
-            # zsh-abbr ships under a non-commercial CC license that nixpkgs
-            # marks unfree; permit just that one package for personal use.
-            config.allowUnfreePredicate = pkg:
-              builtins.elem (nixpkgs.lib.getName pkg) [ "zsh-abbr" ];
-          };
+          pkgs = import nixpkgs { inherit system; };
           extraSpecialArgs = { inherit inputs hosts; host = { inherit name system user; }; };
           modules = [
             (if lib.hasSuffix "darwin" system then ./home/darwin.nix else ./home/linux.nix)
