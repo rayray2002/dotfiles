@@ -7,6 +7,11 @@
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    # zsh completion for conda / mamba / micromamba (modules/completions.nix)
+    conda-zsh-completion = {
+      url = "github:conda-incubator/conda-zsh-completion";
+      flake = false;
+    };
     oh-my-tmux = {
       url = "github:gpakosz/.tmux";
       flake = false;

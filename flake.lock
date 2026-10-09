@@ -21,6 +21,22 @@
         "type": "github"
       }
     },
+    "conda-zsh-completion": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1761167276,
+        "narHash": "sha256-gelndN7zwsN8Ks8BWmm5M1icJSZ2B+qNMAADUqezEuY=",
+        "owner": "conda-incubator",
+        "repo": "conda-zsh-completion",
+        "rev": "632655aab6e147b90f75cf3d195ae2b48e7beec9",
+        "type": "github"
+      },
+      "original": {
+        "owner": "conda-incubator",
+        "repo": "conda-zsh-completion",
+        "type": "github"
+      }
+    },
     "home-manager": {
       "inputs": {
         "nixpkgs": [
@@ -92,6 +108,7 @@
     "root": {
       "inputs": {
         "claude-code": "claude-code",
+        "conda-zsh-completion": "conda-zsh-completion",
         "home-manager": "home-manager",
         "nixpkgs": "nixpkgs",
         "nixpkgs-codex": "nixpkgs-codex",
