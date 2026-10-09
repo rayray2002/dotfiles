@@ -10,18 +10,21 @@ Declarative shell environment managed with [home-manager](https://github.com/nix
    mkdir -p ~/.config/nix
    echo "experimental-features = nix-command flakes" >> ~/.config/nix/nix.conf
    ```
-2. Clone and activate:
+2. Clone and activate (the machine must already be in `hosts.nix`, see
+   [Adding a machine](#adding-a-machine)):
    ```bash
    git clone https://github.com/rayray2002/dotfiles.git ~/dotfiles && cd ~/dotfiles
-   nix run home-manager/master -- switch -b backup --flake '.#ray@mac'   # <user>@<host> from hosts.nix
+   nix run home-manager/master -- switch -b backup --flake '.#ray@mac'   # <user>@<alias>
    ```
    `-b backup` renames any existing `~/.zshrc`, `~/.gitconfig`, etc. to `*.backup`
    instead of failing, so the first activation is non-destructive.
+3. Linux only: `loginctl enable-linger $USER` (may need sudo) so the hourly sync timer
+   also runs while you're logged out.
 
 ## Daily use
 
 Machines are listed in `hosts.nix` (ssh alias → system, user); each gets a flake
-target `<user>@<alias>`. To add a machine, add it there and to `ssh/config`.
+target `<user>@<alias>`: `ray@mac`, `ray@ray-desktop`, `ray@xarm`, `borueihu@snoopy`.
 
 - **Edit on any machine, then `dots-sync "message"`.** It commits tracked changes,
   switches locally first (a broken config is never pushed), pushes, and runs
@@ -39,6 +42,30 @@ target `<user>@<alias>`. To add a machine, add it there and to `ssh/config`.
   lock changes uncommitted on a host — they block its auto-sync.
 - Roll back the last change: `home-manager switch --rollback`
 
+When a host doesn't update:
+
+| Check | Command |
+|---|---|
+| why the last auto-sync stopped | printed in the next shell; also `~/.local/state/dots-sync/error` |
+| run it by hand, with output | `dots-pull` |
+| a push from `dots-sync` | `~/.local/state/dots-sync/<host>.log` on the machine you ran it from |
+| timer (Linux) | `systemctl --user list-timers dots-sync`, `journalctl --user -u dots-sync` |
+| agent (macOS) | `~/.cache/dots-sync.log` |
+
+The usual cause is uncommitted edits on that host: commit them with `dots-sync`, or
+discard them, and it resumes on the next run.
+
+### Adding a machine
+
+1. `hosts.nix`: add `<ssh alias> = { system = ...; user = ...; };`.
+2. `ssh/config`: a `Host <alias>` block with its `User`. If it has more than one
+   address, list them in `ssh/routes.nix` (LAN, then Tailscale, then school/jump);
+   otherwise give it a plain `HostName` here.
+3. `ssh/known_hosts`: pin its key under the alias, checked out of band
+   (`ssh-keyscan -t ed25519 <address>`, then replace the address with the alias).
+4. Its own login key: see **New device** under [SSH](#ssh).
+5. `dots-sync "add <alias>"`, then do [First-time setup](#first-time-setup) on it.
+
 ## Shell
 
 Run **`zhelp`** for the keys, shorthands and functions this config adds. Highlights:
@@ -46,9 +73,16 @@ Run **`zhelp`** for the keys, shorthands and functions this config adds. Highlig
 files and directories with previews, Tab opens fuzzy completion, and git shorthands
 (`gst`, `gco`, …) expand to the full command when you press space (Ctrl+Space doesn't).
 
-Startup is kept fast (~80 ms): tool init scripts (starship, fzf, atuin, zoxide,
-direnv, micromamba) are generated at build time instead of running on every shell,
-and `compinit` only does its full check once a day or after a switch.
+Behaviour worth knowing: `*` doesn't match dotfiles (Tab still completes them), `cat`
+is `bat` without the pager, and `vim` means `nvim` only where nvim is installed. Put
+per-machine settings and secrets in `~/.env.zsh`, which is sourced but not tracked.
+To add a shorthand that expands on space, add it to `expandingAliases` in
+`modules/zsh.nix`; plain aliases go in `aliases` there. `zhelp` picks up both.
+
+Startup is kept fast (~80 ms, was ~170 ms): tool init scripts (starship, fzf, atuin,
+zoxide, direnv, micromamba) are generated at build time instead of running on every
+shell, and `compinit` only does its full check once a day or after a switch (which
+deletes `~/.zcompdump`). Measure with `time zsh -i -c exit`.
 
 ## Python
 
@@ -64,8 +98,8 @@ per-host file rather than the shared `modules/python.nix`:
 
 | Host | Root | Why |
 |------|------|-----|
-| `home/darwin.nix` (this mac) | `~/miniforge3` | reuses the pre-existing miniforge envs (`base`, `wam`, `telegram`, …) |
-| `home/linux.nix` / fresh machines | `~/micromamba` | clean Nix-native root |
+| `home/darwin.nix` (the Mac) | `~/miniforge3` | reuses the pre-existing miniforge envs (`base`, `wam`, `telegram`, …) |
+| `home/linux.nix` (Linux hosts) | `~/miniforge3` | matches the existing roots there; a fresh machine could use a clean `~/micromamba` |
 
 Environment *contents* are never stored in the repo — on a new machine you recreate
 them from spec. The legacy mac root (`~/miniforge3`) can't be renamed by moving it
@@ -77,7 +111,8 @@ Only public material lives here; private keys never leave the machine that made 
 (one ed25519 key per device).
 
 - **Client config** (`ssh/config` → `~/.ssh/config`): hosts grouped by site, with
-  users and per-host options. `ssh -G <host> | grep hostname` shows the route picked.
+  users and per-host options. `ssh -G <host> | grep -E '^(hostname|proxyjump) '` shows
+  the route picked from where you are.
 - **Routes** (`ssh/routes.nix` → generated `~/.ssh/routes.conf`): each multi-route host
   lists its addresses in order of preference, **LAN → Tailscale → school / jump host**;
   ssh uses the first whose port 22 answers, and the last is the unprobed fallback. A LAN
@@ -86,9 +121,9 @@ Only public material lives here; private keys never leave the machine that made 
   one machine several names (`salep` = `xarm`); the attribute name is its `HostKeyAlias`.
 - **Pinned host keys** (`ssh/known_hosts` → `~/.ssh/known_hosts.d/dotfiles`): read
   alongside the normal `~/.ssh/known_hosts`, so a new machine trusts our hosts with no
-  prompt. Multi-route hosts get `HostKeyAlias` from `ssh/routes.nix`, so every route checks one
-  entry. After a
-  host is reinstalled, verify its new key out of band, replace its lines, and switch.
+  prompt. Multi-route hosts get `HostKeyAlias` from `ssh/routes.nix`, so every route
+  checks one entry. After a host is reinstalled, verify its new key out of band, replace
+  its lines, and `dots-sync`.
 - **Login keys** (`ssh/authorized_keys`): the client keys allowed into every host in
   `ssh/managed-hosts`. Server keys (the ones snoopy, salep, … use for git) are kept out
   on purpose, so one shared server can't reach the rest. Push the list with:
