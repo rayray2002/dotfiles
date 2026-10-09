@@ -52,7 +52,8 @@ To add your own: shorthands that expand go in `expandingAliases`, plain ones in 
   with a space aren't saved; `!!` / `!$` expand for review instead of running at once.
   atuin keeps the full searchable history.
 - direnv loads `.envrc` silently (with nix-direnv for `use flake`).
-- Machine-local settings and secrets: `~/.env.zsh`, sourced but not tracked.
+- Machine-local settings: `~/.env.zsh` (every shell) and `~/.zprofile.local` (login
+  shells, e.g. the Mac's `brew shellenv`); both sourced, neither tracked.
 - Linux: an interactive zsh that isn't home-manager's (Ubuntu's `/usr/bin/zsh`, an old
   static zsh) replaces itself with home-manager's zsh before loading the config, since
   this config's compiled modules (fzf-tab) only load there.

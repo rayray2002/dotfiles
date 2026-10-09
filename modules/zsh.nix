@@ -105,6 +105,12 @@ in
 
     shellAliases = aliases;
 
+    # home-manager owns ~/.zprofile; machine-local login settings (e.g. the
+    # Mac's `brew shellenv`) live in ~/.zprofile.local, sourced here.
+    profileExtra = ''
+      [[ -f ~/.zprofile.local ]] && source ~/.zprofile.local
+    '';
+
     plugins = [
       {
         name = "fzf-tab";
