@@ -58,11 +58,16 @@ let
   '' + table (removeAttrs aliases (builtins.attrNames expandingAliases)) + ''
     Functions
       dots-sync "msg"  commit + push dotfiles and apply them on every host
+      dots-status      every host: applied commit, last sync, current/behind/failing
+      dots-secret      encrypted shared secrets (set / edit / list / rekey)
       claude-update    bump claude-code now and dots-sync it
+      ssh-drop         close reused ssh connections (if one hangs)
       usegpu N         set CUDA_VISIBLE_DEVICES (whichgpu shows it)
       loop 'cmd' secs  rerun cmd every secs, clearing the screen
       mamba            micromamba (create/activate envs)
+    Slurm (snoopy): gpus, sgpu, snew, sq, sqa, slog, shist, sk, swatch
     Machine-local settings: ~/.env.zsh
+    More: ~/dotfiles/docs (README.md lists them)
   '');
 in
 {
