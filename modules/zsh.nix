@@ -223,7 +223,6 @@ in
         bindkey '^@' magic-space     # Ctrl+Space
         bindkey -M isearch ' ' magic-space
 
-        (( $+commands[nvim] )) && alias vim=nvim
 
         # GPU helpers (ported from old .zshrc)
         usegpu() { export CUDA_VISIBLE_DEVICES="$1"; }

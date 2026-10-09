@@ -31,7 +31,7 @@ see and keep the real command: `gst` git status, `gco` git checkout, `gcmsg` git
 | `c`, `cr`, `cco` | Claude Code; resume a session; continue the last ([claude-code.md](claude-code.md)) |
 | `ta`, `tl` | tmux attach (or start one), list sessions |
 | `mamba` | micromamba |
-| `vim` | nvim, where it's installed |
+| `vim`, `vi` | Neovim ([neovim.md](neovim.md)) |
 | `y` | yazi file manager; on quit, cd's to where you were |
 | `z <part>`, `zi` | jump to a frequent directory (zoxide); pick with fzf |
 | `cd -<Tab>` | recent directories; a directory name alone also cd's into it |

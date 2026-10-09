@@ -15,6 +15,7 @@
     ../modules/slurm.nix
     ../modules/claude.nix
     ../modules/completions.nix
+    ../modules/neovim.nix
   ];
 
   home.username = host.user;
