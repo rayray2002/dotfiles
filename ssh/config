@@ -1,5 +1,5 @@
-# ssh client config, symlinked to ~/.ssh/config by modules/tmux.nix.
-# Edit here, then: home-manager switch --flake ~/dotfiles#ray@mac  (or ray@linux)
+# ssh client config, symlinked to ~/.ssh/config by modules/ssh.nix.
+# Edit here, then: dots-sync
 #
 # ssh keeps the FIRST value it finds for each option, so order matters:
 #   * a `Match ... exec` probe goes before the `Host` block that is its fallback
@@ -8,61 +8,42 @@
 # Host keys of our own machines are pinned in ssh/known_hosts; multi-route
 # hosts set HostKeyAlias so every route checks the same pinned entry.
 #
-# Multi-route hosts probe an address with `nc -z -w 1` (costs up to 1 s when it
-# is down) and use it if port 22 answers; otherwise the fallback block applies.
-# `Match host` compares against the HostName chosen so far, so once one probe
-# succeeds the later probes for that host are skipped.
+# Multi-route hosts (LAN -> Tailscale -> school/jump) get HostName, ProxyJump
+# and HostKeyAlias from ~/.ssh/routes.conf, generated from ssh/routes.nix by
+# modules/ssh.nix. Only User and other per-host options live here.
+
+Include ~/.ssh/routes.conf
 
 # ---------------------------------------------------------------------------
 # USC lab
 # ---------------------------------------------------------------------------
 
-# xarm, a.k.a. salep (its hostname and tailnet name): lab LAN when on
-# campus, else tailnet
+# xarm, a.k.a. salep (its hostname and tailnet name)
 Host xarm salep
   User ray
-  HostKeyAlias xarm
-Match host xarm,salep exec "nc -z -w 1 10.137.31.180 22 2>/dev/null"
-  HostName 10.137.31.180
-Host xarm salep
-  HostName 100.119.115.83
 
-# snoopy1.usc.edu: tailnet direct (rootless userspace tailscaled under
-# systemd --user); if that is down, LAN address via xarm
+# snoopy1.usc.edu (rootless userspace tailscaled under systemd --user)
 Host snoopy
   User borueihu
-  HostKeyAlias snoopy
-Match host snoopy exec "nc -z -w 1 100.71.153.128 22 2>/dev/null"
-  HostName 100.71.153.128
-  ProxyJump none
-Host snoopy
-  HostName 10.137.35.135
-  ProxyJump xarm
 
-# Franka/Panda workstation (tailnet name: glamor-citrine): tailnet, else LAN
+# Franka/Panda workstation (tailnet name: glamor-citrine)
 Host glamor_panda_shared
   User franka_glamor
 Host glamor_panda_ray
   User ray
-Match host glamor_panda_shared,glamor_panda_ray exec "nc -z -w 1 100.78.42.34 22 2>/dev/null"
-  HostName 100.78.42.34
-Host glamor_panda_shared glamor_panda_ray
-  HostName 10.23.74.233
-  HostKeyAlias glamor-citrine
 
 # ---------------------------------------------------------------------------
 # Personal
 # ---------------------------------------------------------------------------
 
-# ray-desktop: tailnet, else home LAN
 Host ray-desktop
   User ray
   Compression yes
-  HostKeyAlias ray-desktop
-Match host ray-desktop exec "nc -z -w 1 100.122.59.69 22 2>/dev/null"
-  HostName 100.122.59.69
-Host ray-desktop
-  HostName 192.168.12.204
+
+# this mac, over the tailnet (needs Remote Login in System Settings > Sharing)
+Host mac
+  User ray
+  HostName 100.78.144.98
 
 # ---------------------------------------------------------------------------
 # NTU

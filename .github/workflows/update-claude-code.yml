@@ -1,0 +1,31 @@
+# Daily claude-code bump. flake.lock is only ever changed here (or by a manual
+# `claude-update` / `nix flake update` that goes through dots-sync), never by a
+# timer on each machine, so the hosts' working trees stay clean and pullable.
+# Hosts pick the new commit up within an hour via their dots-sync timer.
+name: update claude-code
+
+on:
+  schedule:
+    - cron: "23 9 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DeterminateSystems/nix-installer-action@main
+      - name: Bump claude-code
+        run: nix flake update claude-code
+      - name: Make sure every host still evaluates
+        run: nix eval --raw .#homeConfigurations --apply 'cs: builtins.concatStringsSep "\n" (map (n: n + " " + cs.${n}.activationPackage.drvPath) (builtins.attrNames cs))'
+      - name: Commit and push
+        run: |
+          git diff --quiet flake.lock && { echo "claude-code already current"; exit 0; }
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "flake.lock: bump claude-code"
+          git push
