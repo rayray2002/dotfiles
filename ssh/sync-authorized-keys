@@ -1,0 +1,125 @@
+#!/usr/bin/env bash
+# Push the keys in ssh/authorized_keys to every host in ssh/managed-hosts.
+#
+#   ssh/sync-authorized-keys                 # dry run: show what would change
+#   ssh/sync-authorized-keys --apply         # write it
+#   ssh/sync-authorized-keys --apply --prune # also drop keys outside the block
+#   ssh/sync-authorized-keys --apply snoopy  # only some hosts
+#
+# Each remote ~/.ssh/authorized_keys gets one "# BEGIN dotfiles" ... "# END
+# dotfiles" block holding exactly the listed keys. Lines outside the block
+# (other people's keys, old keys) are kept and reported, unless --prune.
+# A listed key found outside the block, even with options like from=, is
+# replaced by the plain line from ssh/authorized_keys.
+#
+# Writes go through an ssh master connection that stays open: after writing,
+# a fresh login is attempted, and if it fails the backup is restored over the
+# still-open master, so a bad list cannot lock you out.
+set -euo pipefail
+
+here=$(cd "$(dirname "$0")" && pwd)
+keys_file=$here/authorized_keys
+hosts_file=$here/managed-hosts
+begin='# BEGIN dotfiles (managed by ~/dotfiles/ssh/sync-authorized-keys; edits inside are overwritten)'
+end='# END dotfiles'
+
+apply=0 prune=0 hosts=()
+for arg in "$@"; do
+  case $arg in
+    --apply) apply=1 ;;
+    --prune) prune=1 ;;
+    -h|--help) sed -n '2,17p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -*) echo "unknown option: $arg" >&2; exit 2 ;;
+    *) hosts+=("$arg") ;;
+  esac
+done
+if [ ${#hosts[@]} -eq 0 ]; then
+  while read -r h; do hosts+=("$h"); done < <(grep -v '^#' "$hosts_file" | grep .)
+fi
+
+wanted=$(grep -v '^#' "$keys_file" | grep . || true)
+if [ -z "$wanted" ]; then
+  echo "refusing to run: $keys_file lists no keys" >&2
+  exit 1
+fi
+printf '%s\n' "$wanted" | ssh-keygen -lf - >/dev/null || { echo "bad key in $keys_file" >&2; exit 1; }
+
+tmp=$(mktemp -d /tmp/sak.XXXXXX)
+trap 'for s in "$tmp"/m*; do [ -S "$s" ] && ssh -S "$s" -O exit x 2>/dev/null; done; rm -rf "$tmp"' EXIT
+
+# Rebuild an authorized_keys file: drop the old managed block and any copies of
+# managed keys elsewhere, keep (or with prune, drop) other key lines, append the
+# new block. Keys are compared by their base64 blob, so options and comments
+# do not matter.
+rebuild() { # $1 = current file, $2 = wanted keys file
+  awk -v begin="$begin" -v end="$end" -v prune="$prune" -v keysfile="$2" '
+    function blob(line,  i, n, f) { n = split(line, f, /[ \t]+/)
+      for (i = 1; i <= n; i++) if (f[i] ~ /^AAAA/) return f[i]
+      return "" }
+    BEGIN { while ((getline l < keysfile) > 0) { want[blob(l)] = 1; keys[++nk] = l } }
+    $0 == end || index($0, "# BEGIN dotfiles") == 1 { inblock = ($0 != end); next }
+    inblock { next }
+    { b = blob($0) }
+    b != "" && (b in want) { next }
+    b != "" && prune { next }
+    { out[++n] = $0 }
+    END {
+      while (n > 0 && out[n] ~ /^[ \t]*$/) n--
+      for (i = 1; i <= n; i++) print out[i]
+      if (n > 0) print ""
+      print begin
+      for (i = 1; i <= nk; i++) print keys[i]
+      print end
+    }' "$1"
+}
+
+printf '%s\n' "$wanted" > "$tmp/wanted"
+status=0 i=0
+for host in "${hosts[@]}"; do
+  i=$((i + 1)); sock=$tmp/m$i
+  echo "=== $host"
+  if ! ssh -o BatchMode=yes -o ConnectTimeout=10 -o ControlMaster=yes -o ControlPath="$sock" \
+         -o ControlPersist=120 -fN "$host" 2>"$tmp/err"; then
+    echo "  unreachable, skipped: $(tail -1 "$tmp/err")"; status=1; continue
+  fi
+  run() { ssh -S "$sock" -o BatchMode=yes "$host" "$@" 2>/dev/null; }
+
+  run 'cat ~/.ssh/authorized_keys 2>/dev/null || true' > "$tmp/cur"
+  rebuild "$tmp/cur" "$tmp/wanted" > "$tmp/new"
+
+  # unmanaged = key lines in the current file that are not in the wanted list
+  others=$(prune=0 rebuild "$tmp/cur" /dev/null | grep -v '^#' | grep . || true)
+  others=$(printf '%s\n' "$others" | awk -v keysfile="$tmp/wanted" '
+    function blob(line,  i, n, f) { n = split(line, f, /[ \t]+/)
+      for (i = 1; i <= n; i++) if (f[i] ~ /^AAAA/) return f[i]
+      return "" }
+    BEGIN { while ((getline l < keysfile) > 0) want[blob(l)] = 1 }
+    { b = blob($0) } b != "" && !(b in want)')
+  if [ -n "$others" ]; then
+    echo "  keys outside the managed block ($([ $prune = 1 ] && echo 'PRUNED' || echo 'kept')):"
+    printf '%s\n' "$others" | { ssh-keygen -lf - 2>/dev/null || echo "    (unparseable)"; } | sed 's/^/    /'
+  fi
+
+  if cmp -s "$tmp/cur" "$tmp/new"; then
+    echo "  up to date"; ssh -S "$sock" -O exit "$host" 2>/dev/null || true; continue
+  fi
+  diff -u "$tmp/cur" "$tmp/new" | tail -n +3 | sed 's/^/  /' || true
+  if [ $apply = 0 ]; then
+    echo "  (dry run; --apply to write)"; ssh -S "$sock" -O exit "$host" 2>/dev/null || true; continue
+  fi
+
+  stamp=$(date +%Y%m%d-%H%M%S)
+  run "umask 077; mkdir -p ~/.ssh
+       [ -f ~/.ssh/authorized_keys ] && cp -p ~/.ssh/authorized_keys ~/.ssh/authorized_keys.bak-$stamp
+       cat > ~/.ssh/authorized_keys.new && chmod 600 ~/.ssh/authorized_keys.new &&
+       mv ~/.ssh/authorized_keys.new ~/.ssh/authorized_keys" < "$tmp/new"
+
+  if ssh -o BatchMode=yes -o ConnectTimeout=15 -o ControlPath=none "$host" true 2>/dev/null; then
+    echo "  written (backup: ~/.ssh/authorized_keys.bak-$stamp); fresh login OK"
+  else
+    run "if [ -f ~/.ssh/authorized_keys.bak-$stamp ]; then cp -p ~/.ssh/authorized_keys.bak-$stamp ~/.ssh/authorized_keys; else rm -f ~/.ssh/authorized_keys; fi"
+    echo "  FRESH LOGIN FAILED after writing; previous file restored" >&2; status=1
+  fi
+  ssh -S "$sock" -O exit "$host" 2>/dev/null || true
+done
+exit $status

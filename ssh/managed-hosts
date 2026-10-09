@@ -1,0 +1,9 @@
+# Hosts whose ~/.ssh/authorized_keys get the block from ssh/authorized_keys.
+# One per account: ws1-7 and meow1-2 share an NFS home, so ws2 covers them.
+# glamor_panda_shared is a shared lab account and is left alone on purpose.
+xarm
+snoopy
+glamor_panda_ray
+hrimfaxi
+ray-desktop
+ws2
