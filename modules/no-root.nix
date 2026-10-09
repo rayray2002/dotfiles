@@ -113,11 +113,17 @@ lib.mkIf (host.noRoot != null) {
   # nix, hm-switch, nixshell, dots-pull
   home.sessionPath = [ bin ];
 
-  # ssh inside the env looks in <home>/.ssh; the keys stay in the real home.
-  home.file = lib.genAttrs [ ".ssh/id_rsa" ".ssh/id_rsa.pub" ".ssh/id_ed25519" ".ssh/id_ed25519.pub" ]
-    (f: { source = config.lib.file.mkOutOfStoreSymlink "${realHome}/${f}"; });
-
   home.activation.noRootEntrypoints = lib.hm.dag.entryAfter [ "linkGeneration" ] ''
+    # ssh inside the env looks in <home>/.ssh; link the keys that exist in the
+    # real home. (Done here, not via home.file: a store symlink to a missing
+    # key breaks the build under nix-portable.)
+    run mkdir -p ${cfg.home}/.ssh
+    for k in id_rsa id_rsa.pub id_ed25519 id_ed25519.pub; do
+      if [[ -e ${realHome}/.ssh/$k && ! -e ${cfg.home}/.ssh/$k ]]; then
+        run ln -s ${realHome}/.ssh/$k ${cfg.home}/.ssh/$k
+      fi
+    done
+
     # Hand-written versions from before this module are kept once as *.pre-dotfiles.
     for f in nixshell nix hm-switch dots-pull; do
       if [[ -e ${bin}/$f ]] && ! grep -qs '${marker}' ${bin}/$f && [[ ! -e ${bin}/$f.pre-dotfiles ]]; then
