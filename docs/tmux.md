@@ -13,6 +13,12 @@
 
 The prefix is **Ctrl+B**, and **Ctrl+A** works too.
 
+A tmux server only accepts clients of its own version. If a server was started by another
+tmux (Ubuntu's, from before this config, or the previous version before an update),
+attaching with Nix's tmux fails with "open terminal failed: not a terminal". On Linux,
+`tmux`/`ta`/`tl` therefore use the binary that started the running server until you
+restart it (`tmux kill-server` once nothing in it matters); new servers use Nix's tmux.
+
 ## Keys (after the prefix)
 
 | Key | Does |
