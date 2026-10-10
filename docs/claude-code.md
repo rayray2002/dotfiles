@@ -8,7 +8,7 @@ Both are installed from Nix on every machine and bumped daily by CI: Claude Code
 
 | | |
 |---|---|
-| `c` | `claude --dangerously-skip-permissions` (`--permission-mode auto` on snoopy) |
+| `c` | `claude --permission-mode auto` |
 | `cr` | `claude --resume`: pick a past session |
 | `cco` | `claude --continue`: continue the last session in this directory |
 
@@ -37,9 +37,12 @@ from each project's `CLAUDE.md` with Claude Code's `@path` syntax, e.g.
 ## Settings
 
 A few keys are merged into `~/.claude/settings.json` at every activation (jq deep merge;
-everything else in the file, like model, permissions or hooks, stays yours to change from
-Claude):
+everything else in the file, like model, permission rules or hooks, stays yours to change
+from Claude):
 
+- **auto permission mode by default** (`permissions.defaultMode`), so plain `claude`, `cr`
+  and `cco` start in it as well as `c`. For one session in another mode:
+  `claude --permission-mode <mode>`, or Shift+Tab inside it;
 - plugins: `claude-hud`, `superpowers`, `codex`, `ralph-loop`, and their marketplaces;
 - the claude-hud status line, run with Node from Nix (works on every machine);
 - **no attribution**: commits and PRs get no `Co-Authored-By: Claude` trailer, PR footer or
