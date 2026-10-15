@@ -3,8 +3,9 @@
 #   repo (still writable; memory added from Claude edits the repo file, shared
 #   with dots-sync).
 # - A few settings are merged into ~/.claude/settings.json at activation:
-#   plugins, their marketplaces and the claude-hud status line. Everything else
-#   in that file (model, permissions, ...) stays Claude's to change.
+#   plugins, their marketplaces, the claude-hud status line and the default
+#   permission mode (auto). Everything else in that file (model, permission
+#   rules, ...) stays Claude's to change.
 { config, lib, pkgs, host, ... }:
 let
   home = config.home.homeDirectory;
@@ -44,6 +45,9 @@ let
     # commits and PRs (includeCoAuthoredBy is the older name of the same switch).
     attribution = { commit = ""; pr = ""; sessionUrl = false; };
     includeCoAuthoredBy = false;
+    # Sessions start in auto permission mode (also plain `claude`, `cr`, `cco`).
+    # The merge is deep, so the rest of `permissions` (allow, deny, ...) is kept.
+    permissions.defaultMode = "auto";
   });
 in
 {

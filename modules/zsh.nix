@@ -20,7 +20,7 @@ let
     cat = "bat --paging=never";   # highlight like cat; `bat` itself still pages
     ta = "tmux attach || tmux new-session";   # attach, or start one
     tl = "tmux ls";
-    c = "claude --dangerously-skip-permissions";
+    c = "claude --permission-mode auto";
     cr = "claude --resume";      # pick a past session
     cco = "claude --continue";   # continue the last one here
     # `mamba` is defined in modules/python.nix *after* the micromamba shell hook,
