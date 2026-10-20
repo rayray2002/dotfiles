@@ -10,9 +10,11 @@ let
     if pkgs.stdenv.hostPlatform.isDarwin then "/sbin/ifconfig | awk '/inet /{print $2}'"
     else "ip -4 -o addr show | awk '{print $4}' | cut -d/ -f1";
 
-  # `ssh-probe ADDR`: exit 0 if ADDR answers on port 22 within 1 s. A private
-  # address only exists on its own network, so when no local interface shares
-  # its prefix (/24 for 192.168, /16 for 10 and 172.16-31) it fails at once
+  # `ssh-probe ADDR`: exit 0 if an ssh server on ADDR:22 sends its banner within
+  # 1 s. A TCP connect is not enough: USC Wi-Fi completes the handshake between
+  # clients but never delivers ssh, so a connect-only probe picked a dead route.
+  # A private address only exists on its own network, so when no local interface
+  # shares its prefix (/24 for 192.168, /16 for 10 and 172.16-31) it fails at once
   # instead of waiting out the timeout.
   sshProbe = pkgs.writeShellApplication {
     name = "ssh-probe";
@@ -31,7 +33,8 @@ let
         done
         [ -n "$on_net" ] || exit 1
       fi
-      exec nc -z -w 1 "$addr" 22 >/dev/null 2>&1
+      banner=$(nc -w 1 "$addr" 22 </dev/null 2>/dev/null | head -c 4) || true
+      [ "$banner" = "SSH-" ]
     '';
   };
 
