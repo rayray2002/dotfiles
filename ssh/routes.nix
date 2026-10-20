@@ -30,9 +30,8 @@
   # Franka/Panda workstation; the two logins are different users.
   "glamor-citrine" = {
     aliases = [ "glamor_panda_shared" "glamor_panda_ray" ];
-    routes = [
-      "10.23.74.233"         # lab LAN
-      "100.78.42.34"         # tailnet (glamor-citrine)
-    ];
+    # Tailnet only: it sits on DHCP Wi-Fi (was 10.23.74.233 on 2026-10-19) and USC
+    # Wi-Fi does not carry ssh between clients.
+    routes = [ "100.78.42.34" ];  # tailnet (glamor-citrine)
   };
 }
