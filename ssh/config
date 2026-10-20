@@ -32,6 +32,12 @@ Host glamor_panda_shared
 Host glamor_panda_ray
   User ray
 
+# Franka NUC (polymetis robot + gripper servers), link-local: reachable from glamor-citrine only.
+# Shared lab service: start/stop the robot and gripper servers, change nothing else.
+Host nuc
+  HostName 169.254.202.1
+  User franka
+
 # ---------------------------------------------------------------------------
 # Personal
 # ---------------------------------------------------------------------------
