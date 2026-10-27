@@ -12,11 +12,11 @@ let
 
   aliases = {
     l = "eza";
-    ls = "eza --icons";
-    la = "eza --icons -a";
-    ll = "eza --icons -lg";
-    lla = "eza --icons -lga";
-    tree = "eza --icons -T -a -I .git";
+    ls = "eza --icons=auto";
+    la = "eza --icons=auto -a";
+    ll = "eza --icons=auto -lg";
+    lla = "eza --icons=auto -lga";
+    tree = "eza --icons=auto -T -a -I .git";
     cat = "bat --paging=never";   # highlight like cat; `bat` itself still pages
     ta = "tmux attach || tmux new-session";   # attach, or start one
     tl = "tmux ls";
@@ -209,7 +209,7 @@ in
         zstyle ':completion:*:descriptions' format '[%d]'
         zstyle ':completion:*' menu no
         zstyle ':fzf-tab:*' switch-group '<' '>'
-        zstyle ':fzf-tab:complete:(cd|z|pushd|eza|ls):*' fzf-preview 'eza -1 --color=always --icons $realpath'
+        zstyle ':fzf-tab:complete:(cd|z|pushd|eza|ls):*' fzf-preview 'eza -1 --color=always --icons=auto $realpath'
 
         # Shorthands in expandingAliases expand when followed by a space, but
         # only as the first word of a command. Ctrl+Space inserts a plain space.

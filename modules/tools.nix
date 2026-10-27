@@ -21,7 +21,7 @@ in
     };
     changeDirWidget = {
       command = "fd --type d --hidden --exclude .git";
-      options = [ "--preview 'eza -T -L 2 --color=always --icons {}'" ];
+      options = [ "--preview 'eza -T -L 2 --color=always --icons=auto {}'" ];
     };
   };
 
