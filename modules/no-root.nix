@@ -118,6 +118,16 @@ lib.mkIf (host.noRoot != null) {
       netrc-real-home = { file = ../secrets/netrc.age; target = "${realHome}/.netrc"; };
     })
   ];
+  # ssh/scp/git inside the env: root-owned files show up as `nobody` in the user
+  # namespace, and ssh refuses a system config it doesn't think root owns (CARC's
+  # /etc/ssh/ssh_config.d/05-redhat.conf: "Bad owner or permissions"). -F makes ssh
+  # ignore the system-wide config and read ours.
+  home.packages = [
+    (pkgs.writeShellScriptBin "ssh" ''
+      exec ${pkgs.openssh}/bin/ssh -F "$HOME/.ssh/config" "$@"
+    '')
+  ];
+
   # The real account's shell is the system zsh; inside the env use ours.
   home.sessionVariables.SHELL = zsh;
   # nix, hm-switch, nixshell, dots-pull

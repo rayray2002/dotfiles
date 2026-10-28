@@ -46,9 +46,4 @@
   discovery2 = [ { addr = "10.72.0.14"; via = "xarm"; } ];
   endeavour1 = [ { addr = "10.72.0.15"; via = "xarm"; } ];
   endeavour2 = [ { addr = "10.72.0.16"; via = "xarm"; } ];
-  # Caltech; tailnet only, like glamor-citrine.
-  hrimfaxi = [
-    "100.67.150.118"                                  # tailnet
-    { addr = "100.67.150.118"; via = "xarm"; }        # from hosts off the tailnet (snoopy, carc)
-  ];
 }

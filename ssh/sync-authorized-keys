@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Push the keys in ssh/authorized_keys to every host in ssh/managed-hosts.
+# Push the keys in ssh/authorized_keys to every host in ssh/managed-hosts, and the keys
+# in ssh/lab-keys to the hosts marked `lab` there.
 #
 #   ssh/sync-authorized-keys                 # dry run: show what would change
 #   ssh/sync-authorized-keys --apply         # write it
@@ -19,6 +20,7 @@ set -euo pipefail
 
 here=$(cd "$(dirname "$0")" && pwd)
 keys_file=$here/authorized_keys
+lab_file=$here/lab-keys
 hosts_file=$here/managed-hosts
 begin='# BEGIN dotfiles (managed by ~/dotfiles/ssh/sync-authorized-keys; edits inside are overwritten)'
 end='# END dotfiles'
@@ -34,7 +36,7 @@ for arg in "$@"; do
   esac
 done
 if [ ${#hosts[@]} -eq 0 ]; then
-  while read -r h; do hosts+=("$h"); done < <(grep -v '^#' "$hosts_file" | grep .)
+  while read -r h _; do hosts+=("$h"); done < <(grep -v '^#' "$hosts_file" | grep .)
 fi
 
 wanted=$(grep -v '^#' "$keys_file" | grep . || true)
@@ -42,7 +44,8 @@ if [ -z "$wanted" ]; then
   echo "refusing to run: $keys_file lists no keys" >&2
   exit 1
 fi
-printf '%s\n' "$wanted" | ssh-keygen -lf - >/dev/null || { echo "bad key in $keys_file" >&2; exit 1; }
+lab_wanted=$(grep -v '^#' "$lab_file" | grep . || true)
+printf '%s\n' "$wanted" "$lab_wanted" | grep . | ssh-keygen -lf - >/dev/null || { echo "bad key in $keys_file or $lab_file" >&2; exit 1; }
 
 tmp=$(mktemp -d /tmp/sak.XXXXXX)
 trap 'for s in "$tmp"/m*; do [ -S "$s" ] && ssh -S "$s" -O exit x 2>/dev/null; done; rm -rf "$tmp"' EXIT
@@ -73,11 +76,16 @@ rebuild() { # $1 = current file, $2 = wanted keys file
     }' "$1"
 }
 
-printf '%s\n' "$wanted" > "$tmp/wanted"
 status=0 i=0
 for host in "${hosts[@]}"; do
   i=$((i + 1)); sock=$tmp/m$i
   echo "=== $host"
+  # keys for this host: the shared ones, plus the lab machines' keys if it is marked `lab`
+  if awk -v h="$host" '$1 == h && $2 == "lab" { f = 1 } END { exit !f }' "$hosts_file"; then
+    printf '%s\n' "$wanted" "$lab_wanted" | grep . > "$tmp/wanted"
+  else
+    printf '%s\n' "$wanted" > "$tmp/wanted"
+  fi
   if ! ssh -o BatchMode=yes -o ConnectTimeout=10 -o ControlMaster=yes -o ControlPath="$sock" \
          -o ControlPersist=120 -fN "$host" 2>"$tmp/err"; then
     echo "  unreachable, skipped: $(tail -1 "$tmp/err")"; status=1; continue
