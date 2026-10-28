@@ -28,6 +28,7 @@
   # (ssh alias carc = discovery1). Login shell is bash. Store in the home: persistent,
   # unlike /scratch1, which is purged.
   carc        = { system = "x86_64-linux";   user = "borueihu";
+                  routedLan = true;               # reaches the lab LAN without an interface on it
                   noRoot = {
                     location = "/home1/borueihu/nix";
                     home = "/home1/borueihu/nix/home";

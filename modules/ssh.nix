@@ -1,4 +1,4 @@
-{ config, lib, pkgs, ... }:
+{ config, lib, pkgs, host, ... }:
 let
   routes = import ../ssh/routes.nix;
   spec = name: let v = routes.${name}; in
@@ -15,7 +15,8 @@ let
   # clients but never delivers ssh, so a connect-only probe picked a dead route.
   # A private address only exists on its own network, so when no local interface
   # shares its prefix (/24 for 192.168, /16 for 10 and 172.16-31) it fails at once
-  # instead of waiting out the timeout.
+  # instead of waiting out the timeout. Hosts with `routedLan` in hosts.nix (CARC,
+  # which routes into the lab network without an interface on it) skip that check.
   sshProbe = pkgs.writeShellApplication {
     name = "ssh-probe";
     runtimeInputs = with pkgs; [ netcat gawk coreutils ] ++ lib.optional stdenv.hostPlatform.isLinux iproute2;
@@ -26,6 +27,7 @@ let
         10.*|172.1[6-9].*|172.2[0-9].*|172.3[01].*) prefix=''${addr%.*.*} ;;
         *) prefix= ;;
       esac
+      ${lib.optionalString (host.routedLan or false) "prefix="}
       if [ -n "$prefix" ]; then
         on_net=
         for ip in $(${localIps}); do
@@ -72,6 +74,10 @@ in
   # Sockets for connection reuse (ControlPath in ssh/config).
   home.activation.sshControlDir = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     run mkdir -p -m 700 ${config.home.homeDirectory}/.ssh/cm
+    ${lib.optionalString (host.noRoot != null) ''
+      # system ssh expands ~ in ControlPath to the account's real home
+      run mkdir -p -m 700 ${host.noRoot.realHome or "/home/${host.user}"}/.ssh/cm
+    ''}
   '';
   # Close every reused connection, e.g. after switching networks if one hangs.
   programs.zsh.initContent = ''
