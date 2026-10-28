@@ -3,11 +3,27 @@
 # Push changes with: ssh/sync-authorized-keys --apply
 # (rewrites only the "# BEGIN dotfiles" block of each remote authorized_keys)
 #
-# Server keys (snoopy, salep, ... used for git pushes) are deliberately not
-# here: a shared server must not get a way into everything else.
+# Lab/server keys (xarm, snoopy, glamor-citrine, carc, hrimfaxi) are here too, so those
+# machines can ssh into each other. Nothing here reaches the Mac: it is not in
+# ssh/managed-hosts, so no key is ever pushed to it.
 
 # Mac (Ray-MacBook-Pro)
 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBLHZn1DDLitLarPuOW3jlljInx3kVlxhuvJUkZGMdJJ ray@Ray-MacBook-Pro.local
 
 # ray-desktop
 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIE009z3CPaNBKnvAynAqvzKFn42QTxuf6phvK0Qf51QH ray@ray-desktop
+
+# xarm (salep)
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC2yelu6pgm5UKmbwXun0stzPwrzHJKwt4Sv2i0u5KkkggzhsmFgBa94SN8l05SwxfEScymypTB3JSLhQkmIHcUQgpH3CMtsH7zYNQ97yHPcSPBYa3JNx3r4bsjQBorsjPVmcXwcWzre3FSzou8parOe4piGhA3l5qSmGBetCJidhsUl/o1K/hH+1mk94kfSkGL11CyM4JccD/vyQbyxCPSBOQrIkwgpzXB6GN0DSZyEhIsLruc7QH5X8/z4/CbOJKM6K+wk4pnAWwhi/YRHVBIwoMF1JKbC3HPojwiSpjWNWVXo7ujM/ZlsngMJLiC/J+Wyk/AGvEPl/WFB+vAau6FuXfyuxrP3ac9dibgeKcb79XKUY9dP8hq/TKIjWBBQssUDCyD5hiRgnu9/hBXIL/rdPXp9xs5KxitWL1l5LqEGl5bO08i5SFBi6Wbb7oSaEMWAbBfWZjfi9KjGD8Jv1Di91qsZJKsSnQ8vyVCNysoAgLOz5YRMID5l5ycco9CFRk= ray@salep
+
+# snoopy
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDP7GlSUeetoIpapxutrZGqwgfal92ckaVVh3VMeIOR4hjp9P0wSO+rrY1z2UJ6P9y3yOpVnEUMWmtzd7TlY0XV+Oo+NW1mKodRhUMMuo7LYPtsjMe3Mt7Ep6ROtKaLqkHMUqfej6u7G9ueL+54wdLyay0cyuDM8vzFjQYQIEPBiLA8Erh/w9QtoAI0kYipq5RVneX1KSjNODtE661rlOEXxMNT8iXGSwXkY9AZHbt0F4Pql8rTeVa/eFZd6W/rc668kMG11LT8DS/RiwqnTXZUc2AqpfXjq78cNgEUbv7y97gKk2C9lJs/Zax5NkynEPymRzGfiQ8P2KhuTdMpsJqxRY2TxlCf+iRjTaBKaLt3MVaHqz1YFzha3L9TGNg3ch+NWaVmpMmKJ8Jr/7ixFsAF5rdBL/jnGd3uhbJPTkeg2A71auXArpiQ2CBARvRb4gLOjwOcUL/zwB8NdPYzURO2v5IB2EyGiHgAM/RUFiLRb5q3IejJHrG9d6vTU1VU/38= borueihu@snoopy1
+
+# glamor-citrine (glamor_panda_ray)
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOkNsTbw0q751OVy6HjTSRC0QRjBvzIW6LGH1xmqYfqx glamor_panda_ray
+
+# carc (discovery/endeavour)
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJa0oDiS5CD6Kf33BK1p2YZmFvODciAVXZQJ5PITilfr borueihu@carc
+
+# hrimfaxi
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJTVbCM4uW2W91dFZaigQMK4sug3t6soAlUmFV84kK6J hrimfaxi

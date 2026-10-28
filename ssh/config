@@ -71,8 +71,6 @@ Host ws* meow*
 # hrimfaxi is hrimfaxi.gps.caltech.edu, reached over the tailnet
 Host hrimfaxi
   User ray
-  HostName 100.67.150.118
-  HostKeyAlias hrimfaxi
 
 # ---------------------------------------------------------------------------
 # Defaults

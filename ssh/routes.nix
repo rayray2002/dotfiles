@@ -32,7 +32,10 @@
     aliases = [ "glamor_panda_shared" "glamor_panda_ray" ];
     # Tailnet only: it sits on DHCP Wi-Fi (was 10.23.74.233 on 2026-10-19) and USC
     # Wi-Fi does not carry ssh between clients.
-    routes = [ "100.78.42.34" ];  # tailnet (glamor-citrine)
+    routes = [
+      "100.78.42.34"                                  # tailnet (glamor-citrine)
+      { addr = "100.78.42.34"; via = "xarm"; }        # from hosts off the tailnet (snoopy, carc)
+    ];
   };
   # USC CARC login nodes (10.72.0.x is only reachable from the USC network / VPN, so
   # hop through xarm). Authentication uses the Mac's own key through the jump.
@@ -43,4 +46,9 @@
   discovery2 = [ { addr = "10.72.0.14"; via = "xarm"; } ];
   endeavour1 = [ { addr = "10.72.0.15"; via = "xarm"; } ];
   endeavour2 = [ { addr = "10.72.0.16"; via = "xarm"; } ];
+  # Caltech; tailnet only, like glamor-citrine.
+  hrimfaxi = [
+    "100.67.150.118"                                  # tailnet
+    { addr = "100.67.150.118"; via = "xarm"; }        # from hosts off the tailnet (snoopy, carc)
+  ];
 }
