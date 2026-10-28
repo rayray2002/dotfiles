@@ -53,6 +53,21 @@ project's own `CLAUDE.md` / `AGENTS.md`.
 - Jobs start outside the Nix env: in sbatch scripts use absolute paths to the env's
   python (e.g. `/scr/borueihu/miniforge3/envs/NAME/bin/python` or a project `.venv`).
 
+## Working style (all projects)
+- **Premise first.** When a request leaves the project, branch, machine, owner or share scope open, restate it in a
+  few bullets before acting; do not guess entities (who builds what, which of two similarly named projects).
+- **Verify against sources, not memory.** Numbers in reports come from re-read result files; claims about papers,
+  APIs or people come from a search or the source. Say what was not checked.
+- **Look before concluding** on anything visual (renders, grasps, placements, figures): open the images, including
+  failures and rejected cases, before calling something fine.
+- **Processes.** Kill by recorded PID or process group, never `pkill -f`/`pgrep -f` with a pattern that matches the
+  calling shell; for torchrun, kill the whole process group. Long training runs checkpoint atomically and resume.
+- **Tokens.** Few concurrent agents, one review per change before it merges, fresh short briefs instead of resuming
+  long agent histories, one background waiter per job.
+- **Citations** (papers): verify every bib entry against DBLP / arXiv / Semantic Scholar / the publisher with strict
+  matching (exact normalized title, full ordered author list, venue, year); never from memory; rebuild and check the
+  page count after edits; comment out unused entries rather than deleting them.
+
 ## Secrets
 - Never print, log or commit credentials (`~/.netrc`, tokens, keys, `.env` files). Shared
   ones are age-encrypted in the dotfiles repo (`secrets/*.age`) and managed with
