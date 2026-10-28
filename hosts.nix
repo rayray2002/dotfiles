@@ -24,6 +24,16 @@
                     memPerGpuGB = 96;
                     jobEnv.HF_HOME = "/scr/borueihu/cache/huggingface";
                   }; };
+  # USC CARC: discovery1-2 and endeavour1-2 share /home1, so one install serves all four
+  # (ssh alias carc = discovery1). Login shell is bash. Store in the home: persistent,
+  # unlike /scratch1, which is purged.
+  carc        = { system = "x86_64-linux";   user = "borueihu";
+                  noRoot = {
+                    location = "/home1/borueihu/nix";
+                    home = "/home1/borueihu/nix/home";
+                    flake = "/home1/borueihu/nix/dotfiles";
+                    realHome = "/home1/borueihu";
+                  }; };
   xarm        = { system = "x86_64-linux";   user = "ray"; };  # tailnet name: salep
   # Franka/Panda workstation (glamor-citrine); single-user Nix owned by ray.
   # The other login on it, glamor_panda_shared, is a shared lab account: not managed.

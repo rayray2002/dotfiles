@@ -60,23 +60,34 @@ v=$("$bin/nix-portable" nix --version | awk '{print $NF}')
   exec bash "$1"
 ' hm "$gen/activate"
 
-real_zshrc=$(getent passwd "$(id -un)" | cut -d: -f6)/.zshrc
-if ! grep -qs 'bin/nixshell' "$real_zshrc"; then
-  say "adding the nixshell hook to the top of $real_zshrc (backup: .zshrc.pre-dotfiles)"
-  [[ -e $real_zshrc ]] && cp -p "$real_zshrc" "$real_zshrc.pre-dotfiles"
+# The hook goes in the rc file of the account's login shell: ~/.zshrc, or ~/.bashrc
+# where that is bash (CARC). Bash login shells read ~/.bash_profile, not ~/.bashrc,
+# so one that sources ~/.bashrc is created when no profile file exists.
+real_home=$(getent passwd "$(id -un)" | cut -d: -f6)
+case $(getent passwd "$(id -un)" | cut -d: -f7) in
+  */bash) rc=$real_home/.bashrc; interactive='[[ $- == *i* ]]' ;;
+  *)      rc=$real_home/.zshrc;  interactive='[[ -o interactive ]]' ;;
+esac
+if ! grep -qs 'bin/nixshell' "$rc"; then
+  say "adding the nixshell hook to the top of $rc (backup: ${rc##*/}.pre-dotfiles)"
+  [[ -e $rc ]] && cp -p "$rc" "$rc.pre-dotfiles"
   {
     cat <<EOF
 # Enter the rootless home-manager env (dotfiles: modules/no-root.nix) on
 # interactive logins. Skipped inside it, with NO_NIXSHELL=1, or if the store
-# is missing, so this can't lock you out. Plain shell: NO_NIXSHELL=1 zsh
-if [[ -o interactive && -z \$IN_NIXSHELL && -z \$NO_NIXSHELL \\
+# is missing, so this can't lock you out. Plain shell: NO_NIXSHELL=1 \$SHELL
+if $interactive && [[ -z \$IN_NIXSHELL && -z \$NO_NIXSHELL \\
       && -x $bin/nixshell && -d $loc/.nix-portable ]]; then
   exec $bin/nixshell
 fi
 
 EOF
-    [[ -e $real_zshrc.pre-dotfiles ]] && cat "$real_zshrc.pre-dotfiles"
-  } > "$real_zshrc"
+    [[ -e $rc.pre-dotfiles ]] && cat "$rc.pre-dotfiles"
+  } > "$rc"
+fi
+if [[ $rc == */.bashrc ]] && ! ls "$real_home"/.bash_profile "$real_home"/.bash_login "$real_home"/.profile >/dev/null 2>&1; then
+  say "creating $real_home/.bash_profile so login shells read ~/.bashrc"
+  printf '[[ -f ~/.bashrc ]] && . ~/.bashrc\n' > "$real_home/.bash_profile"
 fi
 
 say "Done. Open a new ssh session; it lands in the env (HOME=$home)."

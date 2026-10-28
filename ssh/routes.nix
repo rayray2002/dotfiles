@@ -36,7 +36,10 @@
   };
   # USC CARC login nodes (10.72.0.x is only reachable from the USC network / VPN, so
   # hop through xarm). Authentication uses the Mac's own key through the jump.
-  discovery1 = [ { addr = "10.72.0.13"; via = "xarm"; } ];
+  discovery1 = {
+    aliases = [ "carc" ];    # the one managed by hosts.nix (shared /home1)
+    routes = [ { addr = "10.72.0.13"; via = "xarm"; } ];
+  };
   discovery2 = [ { addr = "10.72.0.14"; via = "xarm"; } ];
   endeavour1 = [ { addr = "10.72.0.15"; via = "xarm"; } ];
   endeavour2 = [ { addr = "10.72.0.16"; via = "xarm"; } ];
