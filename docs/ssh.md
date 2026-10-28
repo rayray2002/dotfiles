@@ -12,7 +12,7 @@ them. Config: `ssh/`, `modules/ssh.nix`.
 | `snoopy` | USC GPU server (user `borueihu`) | lab LAN → tailnet → LAN via xarm |
 | `glamor_panda_ray`, `glamor_panda_shared` | Franka workstation (glamor-citrine) | lab LAN → tailnet |
 | `ray-desktop` | home desktop | home LAN → tailnet |
-| `discovery1`, `discovery2`, `endeavour1`, `endeavour2` | USC CARC login nodes (user `borueihu`) | jump through `xarm` |
+| `carc` (= `discovery1`), `discovery2`, `endeavour1`, `endeavour2` | USC CARC login nodes (user `borueihu`, shared `/home1`) | jump through `xarm` |
 | `hrimfaxi` | Caltech | tailnet |
 | `ws1`…`ws7`, `meow1`, `meow2` | NTU CSIE workstations | `<name>.csie.ntu.edu.tw` |
 
@@ -42,9 +42,11 @@ machine is reinstalled, verify its new key out of band, replace its lines and `d
 
 ## Login keys
 
-`ssh/authorized_keys` lists the client keys allowed into every host in
-`ssh/managed-hosts`. Server keys (the ones snoopy, xarm, … use for git) are left out on
-purpose, so one shared server can't reach the rest.
+`ssh/authorized_keys` lists the client keys (the Mac, ray-desktop) allowed into every host in
+`ssh/managed-hosts`. `ssh/lab-keys` holds the lab machines' own keys (xarm, snoopy,
+glamor-citrine, carc) and goes only to hosts marked `lab` there, so the lab machines can ssh
+into each other. Nothing is ever pushed to the Mac, and hrimfaxi and the NTU workstations get
+client keys only.
 
 ```bash
 ssh/sync-authorized-keys                  # dry run: the diff per host
@@ -60,3 +62,8 @@ works, and restores the backup if it doesn't.
 sync from a machine that can already log in, and commit. On a Mac, set a passphrase and
 `ssh-add --apple-use-keychain ~/.ssh/id_ed25519`; the config keeps it unlocked through the
 Keychain.
+
+**Rootless hosts**: inside the Nix env `ssh` is a wrapper around `/usr/bin/ssh -F ~/.ssh/config`
+(modules/no-root.nix): root-owned system files look like `nobody`'s there, and ssh rejects
+e.g. CARC's `/etc/ssh/ssh_config.d/05-redhat.conf`. `routedLan = true` in `hosts.nix` (carc)
+makes `ssh-probe` try LAN addresses the host reaches by routing without an interface on them.
