@@ -8,7 +8,7 @@ project's own `CLAUDE.md` / `AGENTS.md`.
 ## Machines (ssh aliases)
 - `mac`: my laptop (macOS). Dotfiles at `~/dotfiles`.
 - `xarm` (a.k.a. `salep`): USC lab Linux box, 1 GPU.
-- `glamor_panda_ray`: Franka/Panda robot workstation (glamor-citrine), 2 GPUs. Shared lab
+- `glamor_panda_ray`: Franka/Panda robot workstation (glamor-citrine), 1 GPU (RTX 3090). Shared lab
   machine: don't touch the `franka_glamor` account or robot services.
 - `snoopy`: USC GPU server, 8x RTX A6000 under Slurm. No root. My login is `borueihu`.
 - `carc`: USC CARC HPC (Slurm). Login nodes `discovery1-2`, `endeavour1-2` (`carc` = discovery1)
