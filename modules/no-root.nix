@@ -121,10 +121,11 @@ lib.mkIf (host.noRoot != null) {
   # ssh/scp/git inside the env: root-owned files show up as `nobody` in the user
   # namespace, and ssh refuses a system config it doesn't think root owns (CARC's
   # /etc/ssh/ssh_config.d/05-redhat.conf: "Bad owner or permissions"). -F makes ssh
-  # ignore the system-wide config and read ours.
+  # ignore the system-wide config and read ours. It has to be the system ssh: Nix's
+  # openssh can't resolve the user (no nss modules) inside the namespace.
   home.packages = [
     (pkgs.writeShellScriptBin "ssh" ''
-      exec ${pkgs.openssh}/bin/ssh -F "$HOME/.ssh/config" "$@"
+      exec /usr/bin/ssh -F "$HOME/.ssh/config" "$@"
     '')
   ];
 
