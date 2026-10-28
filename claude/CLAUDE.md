@@ -11,6 +11,11 @@ project's own `CLAUDE.md` / `AGENTS.md`.
 - `glamor_panda_ray`: Franka/Panda robot workstation (glamor-citrine), 2 GPUs. Shared lab
   machine: don't touch the `franka_glamor` account or robot services.
 - `snoopy`: USC GPU server, 8x RTX A6000 under Slurm. No root. My login is `borueihu`.
+- `carc`: USC CARC HPC (Slurm). Login nodes `discovery1-2`, `endeavour1-2` (`carc` = discovery1)
+  share `/home1`; I'm `borueihu`. Reached through `xarm`. No root, rootless Nix like snoopy
+  (store and env in `/home1/borueihu/nix`, `$HOME` inside the env is `.../nix/home`). Login
+  shell is bash; the hook in `~/.bashrc` enters the env. `/scratch1` is purged, so keep
+  anything that must last in home or `/project2`. Login nodes are shared: no heavy jobs there.
 - `ray-desktop`: home desktop.
 
 ## Dev tools
