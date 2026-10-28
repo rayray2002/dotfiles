@@ -32,6 +32,10 @@ Host glamor_panda_shared
 Host glamor_panda_ray
   User ray
 
+# USC CARC (discovery1-2, endeavour1-2), reached through xarm (see ssh/routes.nix)
+Host discovery? endeavour?
+  User borueihu
+
 # Franka NUC (polymetis robot + gripper servers), link-local: reachable from glamor-citrine only.
 # Shared lab service: start/stop the robot and gripper servers, change nothing else.
 Host nuc

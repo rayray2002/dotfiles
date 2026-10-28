@@ -12,6 +12,7 @@ them. Config: `ssh/`, `modules/ssh.nix`.
 | `snoopy` | USC GPU server (user `borueihu`) | lab LAN → tailnet → LAN via xarm |
 | `glamor_panda_ray`, `glamor_panda_shared` | Franka workstation (glamor-citrine) | lab LAN → tailnet |
 | `ray-desktop` | home desktop | home LAN → tailnet |
+| `discovery1`, `discovery2`, `endeavour1`, `endeavour2` | USC CARC login nodes (user `borueihu`) | jump through `xarm` |
 | `hrimfaxi` | Caltech | tailnet |
 | `ws1`…`ws7`, `meow1`, `meow2` | NTU CSIE workstations | `<name>.csie.ntu.edu.tw` |
 
